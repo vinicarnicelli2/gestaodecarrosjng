@@ -1,1 +1,4 @@
 project_id = "kovdwsoydmihysyqgwmg"
+
+[functions.send-checklist]
+verify_jwt = false
