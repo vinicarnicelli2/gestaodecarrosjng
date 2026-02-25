@@ -3,6 +3,7 @@ import AppLayout from "@/components/AppLayout";
 import { mockVehicles, mockDrivers } from "@/lib/data";
 import { ClipboardCheck, Send } from "lucide-react";
 import { toast } from "sonner";
+import { supabase } from "@/integrations/supabase/client";
 
 const checklistItems = [
   { id: "pneus", label: "Pneus (calibragem e estado)" },
@@ -48,31 +49,38 @@ const Checklist = () => {
 
     setSending(true);
 
-    // Simulate sending email to compras@jng.com.br
-    await new Promise((resolve) => setTimeout(resolve, 1500));
+    try {
+      const vehicle = mockVehicles.find((v) => v.id === vehicleId);
+      const driver = mockDrivers.find((d) => d.id === driverId);
 
-    const vehicle = mockVehicles.find((v) => v.id === vehicleId);
-    const driver = mockDrivers.find((d) => d.id === driverId);
-    const problems = checklistItems.filter((item) => checks[item.id] === "problema");
+      const { data, error } = await supabase.functions.invoke("send-checklist", {
+        body: {
+          vehiclePlate: vehicle?.plate,
+          vehicleModel: vehicle?.model,
+          driverName: driver?.name,
+          km,
+          checks,
+          checklistItems,
+          observations,
+        },
+      });
 
-    console.log("Checklist enviado para compras@jng.com.br", {
-      vehicle: vehicle?.plate,
-      driver: driver?.name,
-      km,
-      checks,
-      observations,
-      problems: problems.map((p) => p.label),
-    });
+      if (error) throw error;
 
-    toast.success("Checklist enviado com sucesso para compras@jng.com.br!");
+      toast.success("Checklist enviado com sucesso para compras@jng.com.br!");
 
-    // Reset form
-    setVehicleId("");
-    setDriverId("");
-    setKm("");
-    setChecks(Object.fromEntries(checklistItems.map((item) => [item.id, ""])));
-    setObservations("");
-    setSending(false);
+      // Reset form
+      setVehicleId("");
+      setDriverId("");
+      setKm("");
+      setChecks(Object.fromEntries(checklistItems.map((item) => [item.id, ""])));
+      setObservations("");
+    } catch (err: any) {
+      console.error("Erro ao enviar checklist:", err);
+      toast.error("Erro ao enviar checklist. Tente novamente.");
+    } finally {
+      setSending(false);
+    }
   };
 
   const problemCount = Object.values(checks).filter((v) => v === "problema").length;
