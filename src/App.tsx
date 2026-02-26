@@ -3,6 +3,9 @@ import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { AuthProvider } from "@/contexts/AuthContext";
+import ProtectedRoute from "@/components/ProtectedRoute";
+import Auth from "./pages/Auth";
 import Index from "./pages/Index";
 import Checklist from "./pages/Checklist";
 import ChecklistHistory from "./pages/ChecklistHistory";
@@ -17,23 +20,26 @@ const queryClient = new QueryClient();
 
 const App = () => (
   <QueryClientProvider client={queryClient}>
-    <TooltipProvider>
-      <Toaster />
-      <Sonner />
-      <BrowserRouter>
-        <Routes>
-          <Route path="/" element={<Index />} />
-          <Route path="/checklist" element={<Checklist />} />
-          <Route path="/checklist/historico" element={<ChecklistHistory />} />
-          <Route path="/veiculos" element={<Vehicles />} />
-          <Route path="/motoristas" element={<Drivers />} />
-          <Route path="/manutencoes" element={<Maintenances />} />
-          <Route path="/oleo" element={<OilControl />} />
-          <Route path="/reservas" element={<Reservations />} />
-          <Route path="*" element={<NotFound />} />
-        </Routes>
-      </BrowserRouter>
-    </TooltipProvider>
+    <AuthProvider>
+      <TooltipProvider>
+        <Toaster />
+        <Sonner />
+        <BrowserRouter>
+          <Routes>
+            <Route path="/auth" element={<Auth />} />
+            <Route path="/" element={<ProtectedRoute><Index /></ProtectedRoute>} />
+            <Route path="/checklist" element={<ProtectedRoute><Checklist /></ProtectedRoute>} />
+            <Route path="/checklist/historico" element={<ProtectedRoute><ChecklistHistory /></ProtectedRoute>} />
+            <Route path="/veiculos" element={<ProtectedRoute><Vehicles /></ProtectedRoute>} />
+            <Route path="/motoristas" element={<ProtectedRoute><Drivers /></ProtectedRoute>} />
+            <Route path="/manutencoes" element={<ProtectedRoute><Maintenances /></ProtectedRoute>} />
+            <Route path="/oleo" element={<ProtectedRoute><OilControl /></ProtectedRoute>} />
+            <Route path="/reservas" element={<ProtectedRoute><Reservations /></ProtectedRoute>} />
+            <Route path="*" element={<NotFound />} />
+          </Routes>
+        </BrowserRouter>
+      </TooltipProvider>
+    </AuthProvider>
   </QueryClientProvider>
 );
 
