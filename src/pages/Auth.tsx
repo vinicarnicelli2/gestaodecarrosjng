@@ -1,9 +1,19 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "sonner";
 import { LogIn, UserPlus, Mail, Lock, User } from "lucide-react";
 
 const Auth = () => {
+  const { user, loading: authLoading } = useAuth();
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    if (!authLoading && user) {
+      navigate("/", { replace: true });
+    }
+  }, [user, authLoading, navigate]);
   const [isLogin, setIsLogin] = useState(true);
   const [email, setEmail] = useState("vinicius.carnicelli@jng.com.br");
   const [password, setPassword] = useState("");
