@@ -5,7 +5,7 @@ import { LogIn, UserPlus, Mail, Lock, User } from "lucide-react";
 
 const Auth = () => {
   const [isLogin, setIsLogin] = useState(true);
-  const [email, setEmail] = useState("");
+  const [email, setEmail] = useState("vinicius.carnicelli@jng.com.br");
   const [password, setPassword] = useState("");
   const [displayName, setDisplayName] = useState("");
   const [forgotPassword, setForgotPassword] = useState(false);
