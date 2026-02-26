@@ -4,6 +4,7 @@ import { mockVehicles, mockDrivers } from "@/lib/data";
 import { ClipboardCheck, Send } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/contexts/AuthContext";
 import PhotoUpload from "@/components/checklist/PhotoUpload";
 
 const checklistItems = [
@@ -27,6 +28,7 @@ const checklistItems = [
 type CheckValue = "ok" | "problema" | "";
 
 const Checklist = () => {
+  const { user } = useAuth();
   const [vehicleId, setVehicleId] = useState("");
   const [driverId, setDriverId] = useState("");
   const [km, setKm] = useState("");
@@ -131,6 +133,7 @@ const Checklist = () => {
         observations,
         photo_urls: photoUrls,
         problem_count: problemCount,
+        user_id: user?.id,
       });
 
       if (dbError) console.error("Erro ao salvar no banco:", dbError);
