@@ -1,8 +1,9 @@
 import { NavLink, useLocation } from "react-router-dom";
 import { navItems } from "@/lib/data";
-import { Car, Menu, X, LogOut } from "lucide-react";
+import { Menu, X, LogOut } from "lucide-react";
 import { useState } from "react";
 import { useAuth } from "@/contexts/AuthContext";
+import logoJng from "@/assets/logo-jng.png";
 
 const AppSidebar = () => {
   const location = useLocation();
@@ -34,14 +35,11 @@ const AppSidebar = () => {
         }`}
       >
         <div className="p-6 flex items-center gap-3 border-b border-sidebar-border">
-          <div className="w-10 h-10 rounded-lg bg-sidebar-primary flex items-center justify-center">
-            <Car size={22} className="text-sidebar-primary-foreground" />
-          </div>
+          <img src={logoJng} alt="JNG" className="h-8" />
           <div>
             <h1 className="font-display text-lg font-bold text-sidebar-primary-foreground">
-              FleetCheck
+              Gestão de Frota
             </h1>
-            <p className="text-xs text-sidebar-foreground/60">Gestão de Frota</p>
           </div>
         </div>
 

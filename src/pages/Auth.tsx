@@ -4,6 +4,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "sonner";
 import { LogIn, UserPlus, Mail, Lock, User } from "lucide-react";
+import logoJng from "@/assets/logo-jng.png";
 
 const Auth = () => {
   const { user, loading: authLoading } = useAuth();
@@ -80,9 +81,7 @@ const Auth = () => {
     <div className="min-h-screen bg-background flex items-center justify-center p-4">
       <div className="w-full max-w-md">
         <div className="text-center mb-8">
-          <div className="inline-flex items-center justify-center w-14 h-14 rounded-xl bg-accent text-accent-foreground mb-4">
-            <LogIn size={28} />
-          </div>
+          <img src={logoJng} alt="JNG" className="h-12 mx-auto mb-4" />
           <h1 className="text-3xl font-display font-bold">Gestão de Frota</h1>
           <p className="text-muted-foreground mt-2">
             {forgotPassword
