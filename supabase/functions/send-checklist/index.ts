@@ -17,6 +17,7 @@ interface ChecklistPayload {
   checks: Record<string, string>;
   checklistItems: { id: string; label: string }[];
   observations: string;
+  photoUrls: string[];
 }
 
 serve(async (req: Request) => {
@@ -33,6 +34,7 @@ serve(async (req: Request) => {
       checks,
       checklistItems,
       observations,
+      photoUrls,
     }: ChecklistPayload = await req.json();
 
     const problems = checklistItems.filter((item) => checks[item.id] === "problema");
@@ -97,9 +99,18 @@ serve(async (req: Request) => {
           </table>
 
           ${observations ? `
-          <div style="background:#f8fafc;border:1px solid #e2e8f0;border-radius:8px;padding:16px;">
+          <div style="background:#f8fafc;border:1px solid #e2e8f0;border-radius:8px;padding:16px;margin-bottom:20px;">
             <h3 style="margin:0 0 8px;color:#1e293b;">Observações</h3>
             <p style="margin:0;color:#475569;">${observations}</p>
+          </div>
+          ` : ""}
+
+          ${photoUrls && photoUrls.length > 0 ? `
+          <div style="margin-bottom:20px;">
+            <h3 style="margin:0 0 12px;color:#1e293b;">📷 Fotos de Avarias (${photoUrls.length})</h3>
+            <div>
+              ${photoUrls.map((url: string, i: number) => `<a href="${url}" target="_blank" style="display:inline-block;margin:0 8px 8px 0;"><img src="${url}" alt="Avaria ${i + 1}" style="width:150px;height:150px;object-fit:cover;border-radius:8px;border:1px solid #e5e7eb;" /></a>`).join("")}
+            </div>
           </div>
           ` : ""}
         </div>

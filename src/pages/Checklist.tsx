@@ -1,9 +1,10 @@
-import { useState } from "react";
+import { useState, useCallback } from "react";
 import AppLayout from "@/components/AppLayout";
 import { mockVehicles, mockDrivers } from "@/lib/data";
 import { ClipboardCheck, Send } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
+import PhotoUpload from "@/components/checklist/PhotoUpload";
 
 const checklistItems = [
   { id: "pneus", label: "Pneus (calibragem e estado)" },
@@ -34,9 +35,53 @@ const Checklist = () => {
   );
   const [observations, setObservations] = useState("");
   const [sending, setSending] = useState(false);
+  const [photos, setPhotos] = useState<{ file: File; preview: string }[]>([]);
+  const [uploadingPhotos, setUploadingPhotos] = useState(false);
 
   const handleCheck = (id: string, value: CheckValue) => {
     setChecks((prev) => ({ ...prev, [id]: value }));
+  };
+
+  const handleAddPhotos = useCallback((files: FileList) => {
+    const remaining = 5 - photos.length;
+    const newFiles = Array.from(files).slice(0, remaining);
+    const newPhotos = newFiles.map((file) => ({
+      file,
+      preview: URL.createObjectURL(file),
+    }));
+    setPhotos((prev) => [...prev, ...newPhotos]);
+  }, [photos.length]);
+
+  const handleRemovePhoto = useCallback((index: number) => {
+    setPhotos((prev) => {
+      URL.revokeObjectURL(prev[index].preview);
+      return prev.filter((_, i) => i !== index);
+    });
+  }, []);
+
+  const uploadPhotos = async (): Promise<string[]> => {
+    const urls: string[] = [];
+    const timestamp = Date.now();
+
+    for (let i = 0; i < photos.length; i++) {
+      const photo = photos[i];
+      const ext = photo.file.name.split(".").pop() || "jpg";
+      const path = `${timestamp}_${i}.${ext}`;
+
+      const { error } = await supabase.storage
+        .from("checklist-photos")
+        .upload(path, photo.file, { contentType: photo.file.type });
+
+      if (error) throw new Error(`Erro ao enviar foto ${i + 1}: ${error.message}`);
+
+      const { data: urlData } = supabase.storage
+        .from("checklist-photos")
+        .getPublicUrl(path);
+
+      urls.push(urlData.publicUrl);
+    }
+
+    return urls;
   };
 
   const allFilled = Object.values(checks).every((v) => v !== "") && vehicleId && driverId && km;
@@ -50,6 +95,13 @@ const Checklist = () => {
     setSending(true);
 
     try {
+      let photoUrls: string[] = [];
+      if (photos.length > 0) {
+        setUploadingPhotos(true);
+        photoUrls = await uploadPhotos();
+        setUploadingPhotos(false);
+      }
+
       const vehicle = mockVehicles.find((v) => v.id === vehicleId);
       const driver = mockDrivers.find((d) => d.id === driverId);
 
@@ -62,6 +114,7 @@ const Checklist = () => {
           checks,
           checklistItems,
           observations,
+          photoUrls,
         },
       });
 
@@ -70,14 +123,17 @@ const Checklist = () => {
       toast.success("Checklist enviado com sucesso para compras@jng.com.br!");
 
       // Reset form
+      photos.forEach((p) => URL.revokeObjectURL(p.preview));
       setVehicleId("");
       setDriverId("");
       setKm("");
       setChecks(Object.fromEntries(checklistItems.map((item) => [item.id, ""])));
       setObservations("");
+      setPhotos([]);
     } catch (err: any) {
       console.error("Erro ao enviar checklist:", err);
-      toast.error("Erro ao enviar checklist. Tente novamente.");
+      toast.error(err.message || "Erro ao enviar checklist. Tente novamente.");
+      setUploadingPhotos(false);
     } finally {
       setSending(false);
     }
@@ -209,6 +265,14 @@ const Checklist = () => {
           )}
         </div>
 
+        {/* Photo Upload */}
+        <PhotoUpload
+          photos={photos}
+          uploading={uploadingPhotos}
+          onAdd={handleAddPhotos}
+          onRemove={handleRemovePhoto}
+        />
+
         {/* Observations */}
         <div className="bg-card rounded-lg border p-6 animate-fade-in">
           <h2 className="font-display font-semibold text-lg mb-3">Observações</h2>
@@ -230,7 +294,11 @@ const Checklist = () => {
           className="w-full flex items-center justify-center gap-2 px-6 py-3.5 rounded-lg bg-accent text-accent-foreground font-semibold text-sm hover:opacity-90 transition-opacity disabled:opacity-40 disabled:cursor-not-allowed"
         >
           <Send size={18} />
-          {sending ? "Enviando..." : "Enviar Checklist para compras@jng.com.br"}
+          {sending
+            ? uploadingPhotos
+              ? "Enviando fotos..."
+              : "Enviando checklist..."
+            : "Enviar Checklist para compras@jng.com.br"}
         </button>
       </div>
     </AppLayout>
