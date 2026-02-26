@@ -1,6 +1,5 @@
-import { useState, useCallback } from "react";
+import { useState, useCallback, useEffect } from "react";
 import AppLayout from "@/components/AppLayout";
-import { mockVehicles, mockDrivers } from "@/lib/data";
 import { ClipboardCheck, Send } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
@@ -39,6 +38,13 @@ const Checklist = () => {
   const [sending, setSending] = useState(false);
   const [photos, setPhotos] = useState<{ file: File; preview: string }[]>([]);
   const [uploadingPhotos, setUploadingPhotos] = useState(false);
+  const [dbVehicles, setDbVehicles] = useState<{ id: string; plate: string; model: string }[]>([]);
+  const [dbDrivers, setDbDrivers] = useState<{ id: string; name: string }[]>([]);
+
+  useEffect(() => {
+    supabase.from("vehicles").select("id, plate, model").order("plate").then(({ data }) => setDbVehicles(data ?? []));
+    supabase.from("drivers").select("id, name").order("name").then(({ data }) => setDbDrivers(data ?? []));
+  }, []);
 
   const handleCheck = (id: string, value: CheckValue) => {
     setChecks((prev) => ({ ...prev, [id]: value }));
@@ -104,8 +110,8 @@ const Checklist = () => {
         setUploadingPhotos(false);
       }
 
-      const vehicle = mockVehicles.find((v) => v.id === vehicleId);
-      const driver = mockDrivers.find((d) => d.id === driverId);
+      const vehicle = dbVehicles.find((v) => v.id === vehicleId);
+      const driver = dbDrivers.find((d) => d.id === driverId);
 
       const { data, error } = await supabase.functions.invoke("send-checklist", {
         body: {
@@ -188,7 +194,7 @@ const Checklist = () => {
                 className="w-full rounded-lg border border-input bg-background px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-ring"
               >
                 <option value="">Selecione...</option>
-                {mockVehicles.map((v) => (
+                {dbVehicles.map((v) => (
                   <option key={v.id} value={v.id}>
                     {v.plate} — {v.model}
                   </option>
@@ -206,7 +212,7 @@ const Checklist = () => {
                 className="w-full rounded-lg border border-input bg-background px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-ring"
               >
                 <option value="">Selecione...</option>
-                {mockDrivers.map((d) => (
+                {dbDrivers.map((d) => (
                   <option key={d.id} value={d.id}>
                     {d.name}
                   </option>

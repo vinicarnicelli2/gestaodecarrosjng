@@ -56,6 +56,42 @@ export type Database = {
         }
         Relationships: []
       }
+      drivers: {
+        Row: {
+          cnh: string
+          cnh_category: string
+          cnh_expiry: string
+          created_at: string
+          id: string
+          name: string
+          phone: string
+          status: string
+          user_id: string
+        }
+        Insert: {
+          cnh: string
+          cnh_category?: string
+          cnh_expiry: string
+          created_at?: string
+          id?: string
+          name: string
+          phone?: string
+          status?: string
+          user_id: string
+        }
+        Update: {
+          cnh?: string
+          cnh_category?: string
+          cnh_expiry?: string
+          created_at?: string
+          id?: string
+          name?: string
+          phone?: string
+          status?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       profiles: {
         Row: {
           created_at: string
@@ -92,6 +128,45 @@ export type Database = {
           id?: string
           role?: Database["public"]["Enums"]["app_role"]
           user_id?: string
+        }
+        Relationships: []
+      }
+      vehicles: {
+        Row: {
+          created_at: string
+          id: string
+          km: number
+          last_oil_change: string | null
+          model: string
+          next_oil_change: number | null
+          plate: string
+          status: string
+          user_id: string
+          year: number
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          km?: number
+          last_oil_change?: string | null
+          model: string
+          next_oil_change?: number | null
+          plate: string
+          status?: string
+          user_id: string
+          year: number
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          km?: number
+          last_oil_change?: string | null
+          model?: string
+          next_oil_change?: number | null
+          plate?: string
+          status?: string
+          user_id?: string
+          year?: number
         }
         Relationships: []
       }
