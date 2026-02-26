@@ -120,6 +120,21 @@ const Checklist = () => {
 
       if (error) throw error;
 
+      // Save to database
+      const problemCount = Object.values(checks).filter((v) => v === "problema").length;
+      const { error: dbError } = await supabase.from("checklists").insert({
+        vehicle_plate: vehicle?.plate ?? "",
+        vehicle_model: vehicle?.model ?? "",
+        driver_name: driver?.name ?? "",
+        km,
+        checks,
+        observations,
+        photo_urls: photoUrls,
+        problem_count: problemCount,
+      });
+
+      if (dbError) console.error("Erro ao salvar no banco:", dbError);
+
       toast.success("Checklist enviado com sucesso para compras@jng.com.br!");
 
       // Reset form

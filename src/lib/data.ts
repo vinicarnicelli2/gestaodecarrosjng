@@ -1,4 +1,4 @@
-import { Car, Users, Wrench, CalendarCheck, Droplets, LayoutDashboard, ClipboardCheck } from "lucide-react";
+import { Car, Users, Wrench, CalendarCheck, Droplets, LayoutDashboard, ClipboardCheck, History } from "lucide-react";
 
 export interface Vehicle {
   id: string;
@@ -48,6 +48,7 @@ export interface Reservation {
 export const navItems = [
   { label: "Dashboard", icon: LayoutDashboard, path: "/" },
   { label: "Checklist", icon: ClipboardCheck, path: "/checklist" },
+  { label: "Histórico", icon: History, path: "/checklist/historico" },
   { label: "Veículos", icon: Car, path: "/veiculos" },
   { label: "Motoristas", icon: Users, path: "/motoristas" },
   { label: "Manutenções", icon: Wrench, path: "/manutencoes" },
