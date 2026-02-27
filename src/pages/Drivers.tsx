@@ -3,8 +3,14 @@ import AppLayout from "@/components/AppLayout";
 import StatusBadge from "@/components/StatusBadge";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
-import { Users, Plus, Trash2, X, AlertTriangle } from "lucide-react";
+import { Users, Plus, Trash2, X, AlertTriangle, Pencil } from "lucide-react";
 import { toast } from "sonner";
+import {
+  Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription,
+} from "@/components/ui/dialog";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 
 interface Driver {
   id: string;
@@ -22,6 +28,8 @@ const Drivers = () => {
   const [loading, setLoading] = useState(true);
   const [showForm, setShowForm] = useState(false);
   const [form, setForm] = useState({ name: "", cnh: "", cnh_expiry: "", cnh_category: "B", phone: "", status: "ativo" });
+  const [editDriver, setEditDriver] = useState<Driver | null>(null);
+  const [editForm, setEditForm] = useState({ name: "", cnh: "", cnh_expiry: "", cnh_category: "", phone: "", status: "" });
 
   const fetchDrivers = async () => {
     const { data, error } = await supabase
@@ -69,6 +77,38 @@ const Drivers = () => {
       return;
     }
     toast.success("Motorista excluído.");
+    fetchDrivers();
+  };
+
+  const openEdit = (d: Driver) => {
+    setEditDriver(d);
+    setEditForm({
+      name: d.name,
+      cnh: d.cnh,
+      cnh_expiry: d.cnh_expiry,
+      cnh_category: d.cnh_category,
+      phone: d.phone,
+      status: d.status,
+    });
+  };
+
+  const handleEdit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!editDriver) return;
+    const { error } = await supabase.from("drivers").update({
+      name: editForm.name,
+      cnh: editForm.cnh,
+      cnh_expiry: editForm.cnh_expiry,
+      cnh_category: editForm.cnh_category,
+      phone: editForm.phone,
+      status: editForm.status,
+    }).eq("id", editDriver.id);
+    if (error) {
+      toast.error("Erro ao atualizar motorista: " + error.message);
+      return;
+    }
+    toast.success("Motorista atualizado!");
+    setEditDriver(null);
     fetchDrivers();
   };
 
@@ -145,9 +185,14 @@ const Drivers = () => {
                   <div className="flex items-center gap-2">
                     <StatusBadge status={d.status} />
                     {isAdmin && (
-                      <button onClick={() => handleDelete(d.id)} className="text-destructive hover:text-destructive/80 transition-colors">
-                        <Trash2 size={16} />
-                      </button>
+                      <>
+                        <button onClick={() => openEdit(d)} className="text-muted-foreground hover:text-foreground transition-colors">
+                          <Pencil size={16} />
+                        </button>
+                        <button onClick={() => handleDelete(d.id)} className="text-destructive hover:text-destructive/80 transition-colors">
+                          <Trash2 size={16} />
+                        </button>
+                      </>
                     )}
                   </div>
                 </div>
@@ -176,6 +221,58 @@ const Drivers = () => {
           })}
         </div>
       )}
+
+      <Dialog open={!!editDriver} onOpenChange={(open) => !open && setEditDriver(null)}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Editar Motorista</DialogTitle>
+            <DialogDescription>Atualize os dados do motorista abaixo.</DialogDescription>
+          </DialogHeader>
+          <form onSubmit={handleEdit} className="space-y-4">
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label>Nome</Label>
+                <Input value={editForm.name} onChange={(e) => setEditForm({ ...editForm, name: e.target.value })} required />
+              </div>
+              <div className="space-y-2">
+                <Label>Telefone</Label>
+                <Input value={editForm.phone} onChange={(e) => setEditForm({ ...editForm, phone: e.target.value })} required />
+              </div>
+              <div className="space-y-2">
+                <Label>Nº CNH</Label>
+                <Input value={editForm.cnh} onChange={(e) => setEditForm({ ...editForm, cnh: e.target.value })} required />
+              </div>
+              <div className="space-y-2">
+                <Label>Categoria</Label>
+                <select value={editForm.cnh_category} onChange={(e) => setEditForm({ ...editForm, cnh_category: e.target.value })} className="w-full rounded-lg border border-input bg-background px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-ring">
+                  <option value="A">A</option>
+                  <option value="B">B</option>
+                  <option value="AB">AB</option>
+                  <option value="C">C</option>
+                  <option value="D">D</option>
+                  <option value="E">E</option>
+                </select>
+              </div>
+              <div className="space-y-2">
+                <Label>Validade CNH</Label>
+                <Input type="date" value={editForm.cnh_expiry} onChange={(e) => setEditForm({ ...editForm, cnh_expiry: e.target.value })} required />
+              </div>
+              <div className="space-y-2">
+                <Label>Status</Label>
+                <select value={editForm.status} onChange={(e) => setEditForm({ ...editForm, status: e.target.value })} className="w-full rounded-lg border border-input bg-background px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-ring">
+                  <option value="ativo">Ativo</option>
+                  <option value="inativo">Inativo</option>
+                  <option value="cnh vencida">CNH Vencida</option>
+                </select>
+              </div>
+            </div>
+            <DialogFooter>
+              <Button type="button" variant="outline" onClick={() => setEditDriver(null)}>Cancelar</Button>
+              <Button type="submit">Salvar</Button>
+            </DialogFooter>
+          </form>
+        </DialogContent>
+      </Dialog>
     </AppLayout>
   );
 };
