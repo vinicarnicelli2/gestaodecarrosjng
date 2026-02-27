@@ -1,4 +1,4 @@
-import { Car, Users, Wrench, CalendarCheck, Droplets, LayoutDashboard, ClipboardCheck, History } from "lucide-react";
+import { Car, Users, Wrench, CalendarCheck, Droplets, LayoutDashboard, ClipboardCheck, History, UserCog } from "lucide-react";
 
 export interface Vehicle {
   id: string;
@@ -54,6 +54,7 @@ export const navItems = [
   { label: "Manutenções", icon: Wrench, path: "/manutencoes" },
   { label: "Controle de Óleo", icon: Droplets, path: "/oleo" },
   { label: "Reservas", icon: CalendarCheck, path: "/reservas" },
+  { label: "Gestores", icon: UserCog, path: "/gestores" },
 ];
 
 export const mockVehicles: Vehicle[] = [
