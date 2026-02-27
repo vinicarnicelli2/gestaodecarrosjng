@@ -3,8 +3,14 @@ import AppLayout from "@/components/AppLayout";
 import StatusBadge from "@/components/StatusBadge";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
-import { Car, Plus, Trash2, X } from "lucide-react";
+import { Car, Plus, Trash2, X, Pencil } from "lucide-react";
 import { toast } from "sonner";
+import {
+  Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription,
+} from "@/components/ui/dialog";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 
 interface Vehicle {
   id: string;
@@ -21,6 +27,8 @@ const Vehicles = () => {
   const [loading, setLoading] = useState(true);
   const [showForm, setShowForm] = useState(false);
   const [form, setForm] = useState({ plate: "", model: "", year: "", km: "", status: "disponível" });
+  const [editVehicle, setEditVehicle] = useState<Vehicle | null>(null);
+  const [editForm, setEditForm] = useState({ plate: "", model: "", year: "", km: "", status: "" });
 
   const fetchVehicles = async () => {
     const { data, error } = await supabase
@@ -67,6 +75,36 @@ const Vehicles = () => {
       return;
     }
     toast.success("Veículo excluído.");
+    fetchVehicles();
+  };
+
+  const openEdit = (v: Vehicle) => {
+    setEditVehicle(v);
+    setEditForm({
+      plate: v.plate,
+      model: v.model,
+      year: String(v.year),
+      km: String(v.km),
+      status: v.status,
+    });
+  };
+
+  const handleEdit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!editVehicle) return;
+    const { error } = await supabase.from("vehicles").update({
+      plate: editForm.plate.toUpperCase(),
+      model: editForm.model,
+      year: Number(editForm.year),
+      km: Number(editForm.km),
+      status: editForm.status,
+    }).eq("id", editVehicle.id);
+    if (error) {
+      toast.error("Erro ao atualizar veículo: " + error.message);
+      return;
+    }
+    toast.success("Veículo atualizado!");
+    setEditVehicle(null);
     fetchVehicles();
   };
 
@@ -142,9 +180,14 @@ const Vehicles = () => {
                     <td className="px-6 py-4"><StatusBadge status={v.status} /></td>
                     {isAdmin && (
                       <td className="px-6 py-4">
-                        <button onClick={() => handleDelete(v.id)} className="text-destructive hover:text-destructive/80 transition-colors">
-                          <Trash2 size={16} />
-                        </button>
+                        <div className="flex items-center gap-2">
+                          <button onClick={() => openEdit(v)} className="text-muted-foreground hover:text-foreground transition-colors">
+                            <Pencil size={16} />
+                          </button>
+                          <button onClick={() => handleDelete(v.id)} className="text-destructive hover:text-destructive/80 transition-colors">
+                            <Trash2 size={16} />
+                          </button>
+                        </div>
                       </td>
                     )}
                   </tr>
@@ -154,6 +197,47 @@ const Vehicles = () => {
           </table>
         </div>
       </div>
+
+      <Dialog open={!!editVehicle} onOpenChange={(open) => !open && setEditVehicle(null)}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Editar Veículo</DialogTitle>
+            <DialogDescription>Atualize os dados do veículo abaixo.</DialogDescription>
+          </DialogHeader>
+          <form onSubmit={handleEdit} className="space-y-4">
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label>Placa</Label>
+                <Input value={editForm.plate} onChange={(e) => setEditForm({ ...editForm, plate: e.target.value })} required />
+              </div>
+              <div className="space-y-2">
+                <Label>Modelo</Label>
+                <Input value={editForm.model} onChange={(e) => setEditForm({ ...editForm, model: e.target.value })} required />
+              </div>
+              <div className="space-y-2">
+                <Label>Ano</Label>
+                <Input type="number" value={editForm.year} onChange={(e) => setEditForm({ ...editForm, year: e.target.value })} required />
+              </div>
+              <div className="space-y-2">
+                <Label>KM</Label>
+                <Input type="number" value={editForm.km} onChange={(e) => setEditForm({ ...editForm, km: e.target.value })} required />
+              </div>
+            </div>
+            <div className="space-y-2">
+              <Label>Status</Label>
+              <select value={editForm.status} onChange={(e) => setEditForm({ ...editForm, status: e.target.value })} className="w-full rounded-lg border border-input bg-background px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-ring">
+                <option value="disponível">Disponível</option>
+                <option value="em uso">Em uso</option>
+                <option value="manutenção">Manutenção</option>
+              </select>
+            </div>
+            <DialogFooter>
+              <Button type="button" variant="outline" onClick={() => setEditVehicle(null)}>Cancelar</Button>
+              <Button type="submit">Salvar</Button>
+            </DialogFooter>
+          </form>
+        </DialogContent>
+      </Dialog>
     </AppLayout>
   );
 };
