@@ -12,6 +12,7 @@ import Checklist from "./pages/Checklist";
 import ChecklistHistory from "./pages/ChecklistHistory";
 import Vehicles from "./pages/Vehicles";
 import Drivers from "./pages/Drivers";
+import Managers from "./pages/Managers";
 import Maintenances from "./pages/Maintenances";
 import OilControl from "./pages/OilControl";
 import Reservations from "./pages/Reservations";
@@ -37,6 +38,7 @@ const App = () => (
             <Route path="/manutencoes" element={<ProtectedRoute><Maintenances /></ProtectedRoute>} />
             <Route path="/oleo" element={<ProtectedRoute><OilControl /></ProtectedRoute>} />
             <Route path="/reservas" element={<ProtectedRoute><Reservations /></ProtectedRoute>} />
+            <Route path="/gestores" element={<ProtectedRoute><Managers /></ProtectedRoute>} />
             <Route path="*" element={<NotFound />} />
           </Routes>
         </BrowserRouter>

@@ -56,6 +56,35 @@ export type Database = {
         }
         Relationships: []
       }
+      collaborator_manager: {
+        Row: {
+          collaborator_user_id: string
+          created_at: string
+          id: string
+          manager_id: string
+        }
+        Insert: {
+          collaborator_user_id: string
+          created_at?: string
+          id?: string
+          manager_id: string
+        }
+        Update: {
+          collaborator_user_id?: string
+          created_at?: string
+          id?: string
+          manager_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "collaborator_manager_manager_id_fkey"
+            columns: ["manager_id"]
+            isOneToOne: false
+            referencedRelation: "managers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       drivers: {
         Row: {
           cnh: string
@@ -92,6 +121,30 @@ export type Database = {
         }
         Relationships: []
       }
+      managers: {
+        Row: {
+          created_at: string
+          email: string
+          id: string
+          name: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          email: string
+          id?: string
+          name: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          email?: string
+          id?: string
+          name?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       profiles: {
         Row: {
           created_at: string
@@ -112,6 +165,53 @@ export type Database = {
           user_id?: string
         }
         Relationships: []
+      }
+      reservations: {
+        Row: {
+          admin_notes: string | null
+          created_at: string
+          end_date: string
+          id: string
+          reason: string
+          start_date: string
+          status: string
+          updated_at: string
+          user_id: string
+          vehicle_id: string
+        }
+        Insert: {
+          admin_notes?: string | null
+          created_at?: string
+          end_date: string
+          id?: string
+          reason?: string
+          start_date: string
+          status?: string
+          updated_at?: string
+          user_id: string
+          vehicle_id: string
+        }
+        Update: {
+          admin_notes?: string | null
+          created_at?: string
+          end_date?: string
+          id?: string
+          reason?: string
+          start_date?: string
+          status?: string
+          updated_at?: string
+          user_id?: string
+          vehicle_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "reservations_vehicle_id_fkey"
+            columns: ["vehicle_id"]
+            isOneToOne: false
+            referencedRelation: "vehicles"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       user_roles: {
         Row: {
