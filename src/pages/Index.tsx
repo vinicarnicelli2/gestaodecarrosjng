@@ -1,3 +1,5 @@
+import { Navigate } from "react-router-dom";
+import { useAuth } from "@/contexts/AuthContext";
 import AppLayout from "@/components/AppLayout";
 import StatCard from "@/components/StatCard";
 import StatusBadge from "@/components/StatusBadge";
@@ -5,6 +7,11 @@ import { mockVehicles, mockDrivers, mockMaintenances, mockReservations } from "@
 import { Car, Users, Wrench, CalendarCheck, AlertTriangle, Droplets } from "lucide-react";
 
 const Dashboard = () => {
+  const { role, loading } = useAuth();
+
+  if (!loading && role !== "admin") {
+    return <Navigate to="/checklist" replace />;
+  }
   const availableVehicles = mockVehicles.filter((v) => v.status === "disponível").length;
   const activeDrivers = mockDrivers.filter((d) => d.status === "ativo").length;
   const pendingReservations = mockReservations.filter((r) => r.status === "pendente").length;
