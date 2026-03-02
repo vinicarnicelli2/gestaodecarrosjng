@@ -46,15 +46,15 @@ export interface Reservation {
 }
 
 export const navItems = [
-  { label: "Dashboard", icon: LayoutDashboard, path: "/" },
-  { label: "Checklist", icon: ClipboardCheck, path: "/checklist" },
-  { label: "Histórico", icon: History, path: "/checklist/historico" },
-  { label: "Veículos", icon: Car, path: "/veiculos" },
-  { label: "Motoristas", icon: Users, path: "/motoristas" },
-  { label: "Manutenções", icon: Wrench, path: "/manutencoes" },
-  { label: "Controle de Óleo", icon: Droplets, path: "/oleo" },
-  { label: "Reservas", icon: CalendarCheck, path: "/reservas" },
-  { label: "Gestores", icon: UserCog, path: "/gestores" },
+  { label: "Dashboard", icon: LayoutDashboard, path: "/", adminOnly: true },
+  { label: "Checklist", icon: ClipboardCheck, path: "/checklist", adminOnly: false },
+  { label: "Histórico", icon: History, path: "/checklist/historico", adminOnly: false },
+  { label: "Veículos", icon: Car, path: "/veiculos", adminOnly: true },
+  { label: "Motoristas", icon: Users, path: "/motoristas", adminOnly: true },
+  { label: "Manutenções", icon: Wrench, path: "/manutencoes", adminOnly: true },
+  { label: "Controle de Óleo", icon: Droplets, path: "/oleo", adminOnly: true },
+  { label: "Reservas", icon: CalendarCheck, path: "/reservas", adminOnly: false },
+  { label: "Gestores", icon: UserCog, path: "/gestores", adminOnly: true },
 ];
 
 export const mockVehicles: Vehicle[] = [
