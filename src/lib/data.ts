@@ -53,7 +53,8 @@ export const navItems = [
   { label: "Motoristas", icon: Users, path: "/motoristas", adminOnly: true },
   { label: "Manutenções", icon: Wrench, path: "/manutencoes", adminOnly: true },
   { label: "Controle de Óleo", icon: Droplets, path: "/oleo", adminOnly: true },
-  { label: "Reservas", icon: CalendarCheck, path: "/reservas", adminOnly: false },
+  { label: "Reservas", icon: CalendarCheck, path: "/reservas", adminOnly: true },
+  { label: "Minhas Reservas", icon: CalendarCheck, path: "/minhas-reservas", adminOnly: false },
   { label: "Gestores", icon: UserCog, path: "/gestores", adminOnly: true },
 ];
 

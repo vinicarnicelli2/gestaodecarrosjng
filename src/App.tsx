@@ -16,6 +16,7 @@ import Managers from "./pages/Managers";
 import Maintenances from "./pages/Maintenances";
 import OilControl from "./pages/OilControl";
 import Reservations from "./pages/Reservations";
+import MyReservations from "./pages/MyReservations";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -38,6 +39,7 @@ const App = () => (
             <Route path="/manutencoes" element={<ProtectedRoute><Maintenances /></ProtectedRoute>} />
             <Route path="/oleo" element={<ProtectedRoute><OilControl /></ProtectedRoute>} />
             <Route path="/reservas" element={<ProtectedRoute><Reservations /></ProtectedRoute>} />
+            <Route path="/minhas-reservas" element={<ProtectedRoute><MyReservations /></ProtectedRoute>} />
             <Route path="/gestores" element={<ProtectedRoute><Managers /></ProtectedRoute>} />
             <Route path="*" element={<NotFound />} />
           </Routes>
