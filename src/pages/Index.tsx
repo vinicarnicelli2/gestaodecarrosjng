@@ -70,7 +70,7 @@ const Dashboard = () => {
               <div key={m.id} className="flex items-center justify-between p-3 rounded-lg bg-muted/50">
                 <div>
                   <p className="font-medium text-sm">{m.type}</p>
-                  <p className="text-xs text-muted-foreground">{m.vehiclePlate} • {m.date}</p>
+                  <p className="text-xs text-muted-foreground">{m.vehicle_plate} • {m.date}</p>
                 </div>
                 <StatusBadge status={m.status} />
               </div>
