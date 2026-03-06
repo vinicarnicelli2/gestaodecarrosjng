@@ -66,7 +66,7 @@ const Dashboard = () => {
         <div className="bg-card rounded-lg border p-6 animate-fade-in">
           <h2 className="font-display font-semibold text-lg mb-4">Manutenções Próximas</h2>
           <div className="space-y-3">
-            {mockMaintenances.filter(m => m.status !== "concluída").map((m) => (
+            {maintenances.filter(m => m.status !== "concluída").map((m) => (
               <div key={m.id} className="flex items-center justify-between p-3 rounded-lg bg-muted/50">
                 <div>
                   <p className="font-medium text-sm">{m.type}</p>
