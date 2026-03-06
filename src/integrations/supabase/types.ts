@@ -16,6 +16,7 @@ export type Database = {
     Tables: {
       checklists: {
         Row: {
+          checklist_type: string
           checks: Json
           created_at: string
           driver_name: string
@@ -24,11 +25,13 @@ export type Database = {
           observations: string | null
           photo_urls: string[] | null
           problem_count: number
+          reservation_id: string | null
           user_id: string | null
           vehicle_model: string
           vehicle_plate: string
         }
         Insert: {
+          checklist_type?: string
           checks: Json
           created_at?: string
           driver_name: string
@@ -37,11 +40,13 @@ export type Database = {
           observations?: string | null
           photo_urls?: string[] | null
           problem_count?: number
+          reservation_id?: string | null
           user_id?: string | null
           vehicle_model: string
           vehicle_plate: string
         }
         Update: {
+          checklist_type?: string
           checks?: Json
           created_at?: string
           driver_name?: string
@@ -50,11 +55,20 @@ export type Database = {
           observations?: string | null
           photo_urls?: string[] | null
           problem_count?: number
+          reservation_id?: string | null
           user_id?: string | null
           vehicle_model?: string
           vehicle_plate?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "checklists_reservation_id_fkey"
+            columns: ["reservation_id"]
+            isOneToOne: false
+            referencedRelation: "reservations"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       collaborator_manager: {
         Row: {
