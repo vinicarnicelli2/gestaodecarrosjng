@@ -1,13 +1,24 @@
 import { Navigate } from "react-router-dom";
+import { useQuery } from "@tanstack/react-query";
 import { useAuth } from "@/contexts/AuthContext";
 import AppLayout from "@/components/AppLayout";
 import StatCard from "@/components/StatCard";
 import StatusBadge from "@/components/StatusBadge";
-import { mockVehicles, mockDrivers, mockMaintenances, mockReservations } from "@/lib/data";
+import { mockVehicles, mockDrivers, mockReservations } from "@/lib/data";
+import { supabase } from "@/integrations/supabase/client";
 import { Car, Users, Wrench, CalendarCheck, AlertTriangle, Droplets } from "lucide-react";
 
 const Dashboard = () => {
   const { role, loading } = useAuth();
+
+  const { data: maintenances = [] } = useQuery({
+    queryKey: ["maintenances"],
+    queryFn: async () => {
+      const { data, error } = await supabase.from("maintenances").select("*").order("date", { ascending: false });
+      if (error) throw error;
+      return data;
+    },
+  });
 
   if (!loading && role !== "admin") {
     return <Navigate to="/checklist" replace />;
@@ -15,7 +26,7 @@ const Dashboard = () => {
   const availableVehicles = mockVehicles.filter((v) => v.status === "disponível").length;
   const activeDrivers = mockDrivers.filter((d) => d.status === "ativo").length;
   const pendingReservations = mockReservations.filter((r) => r.status === "pendente").length;
-  const pendingMaintenance = mockMaintenances.filter((m) => m.status !== "concluída").length;
+  const pendingMaintenance = maintenances.filter((m) => m.status !== "concluída").length;
   const expiredCNH = mockDrivers.filter((d) => d.status === "cnh vencida").length;
   const oilAlerts = mockVehicles.filter((v) => v.nextOilChange - v.km < 3000).length;
 
@@ -55,11 +66,11 @@ const Dashboard = () => {
         <div className="bg-card rounded-lg border p-6 animate-fade-in">
           <h2 className="font-display font-semibold text-lg mb-4">Manutenções Próximas</h2>
           <div className="space-y-3">
-            {mockMaintenances.filter(m => m.status !== "concluída").map((m) => (
+            {maintenances.filter(m => m.status !== "concluída").map((m) => (
               <div key={m.id} className="flex items-center justify-between p-3 rounded-lg bg-muted/50">
                 <div>
                   <p className="font-medium text-sm">{m.type}</p>
-                  <p className="text-xs text-muted-foreground">{m.vehiclePlate} • {m.date}</p>
+                  <p className="text-xs text-muted-foreground">{m.vehicle_plate} • {m.date}</p>
                 </div>
                 <StatusBadge status={m.status} />
               </div>

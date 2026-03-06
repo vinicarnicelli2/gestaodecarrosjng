@@ -135,6 +135,53 @@ export type Database = {
         }
         Relationships: []
       }
+      maintenances: {
+        Row: {
+          cost: number
+          created_at: string
+          date: string
+          description: string
+          id: string
+          status: string
+          type: string
+          user_id: string
+          vehicle_id: string
+          vehicle_plate: string
+        }
+        Insert: {
+          cost?: number
+          created_at?: string
+          date: string
+          description?: string
+          id?: string
+          status?: string
+          type: string
+          user_id: string
+          vehicle_id: string
+          vehicle_plate: string
+        }
+        Update: {
+          cost?: number
+          created_at?: string
+          date?: string
+          description?: string
+          id?: string
+          status?: string
+          type?: string
+          user_id?: string
+          vehicle_id?: string
+          vehicle_plate?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "maintenances_vehicle_id_fkey"
+            columns: ["vehicle_id"]
+            isOneToOne: false
+            referencedRelation: "vehicles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       managers: {
         Row: {
           created_at: string
