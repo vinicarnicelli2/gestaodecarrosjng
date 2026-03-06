@@ -18,6 +18,7 @@ interface ChecklistPayload {
   checklistItems: { id: string; label: string }[];
   observations: string;
   photoUrls: string[];
+  checklistType?: string;
 }
 
 serve(async (req: Request) => {
@@ -35,11 +36,15 @@ serve(async (req: Request) => {
       checklistItems,
       observations,
       photoUrls,
+      checklistType,
     }: ChecklistPayload = await req.json();
 
     const problems = checklistItems.filter((item) => checks[item.id] === "problema");
     const okItems = checklistItems.filter((item) => checks[item.id] === "ok");
     const now = new Date().toLocaleString("pt-BR", { timeZone: "America/Sao_Paulo" });
+
+    const typeLabel = checklistType || "Checklist";
+    const typeBadgeColor = checklistType === "Devolução" ? "#2563eb" : "#f59e0b";
 
     const problemRows = problems.length > 0
       ? problems.map((p) => `<tr><td style="padding:8px;border:1px solid #e5e7eb;color:#dc2626;">⚠ ${p.label}</td><td style="padding:8px;border:1px solid #e5e7eb;color:#dc2626;font-weight:bold;">PROBLEMA</td></tr>`).join("")
@@ -52,7 +57,8 @@ serve(async (req: Request) => {
     const html = `
       <div style="font-family:Arial,sans-serif;max-width:600px;margin:0 auto;background:#ffffff;">
         <div style="background:#1e293b;color:#ffffff;padding:24px;text-align:center;">
-          <h1 style="margin:0;font-size:22px;">Checklist Veicular</h1>
+          <h1 style="margin:0;font-size:22px;">Checklist Veicular — ${typeLabel}</h1>
+          <span style="display:inline-block;margin-top:8px;padding:4px 12px;border-radius:12px;background:${typeBadgeColor};color:#fff;font-size:13px;font-weight:bold;">${typeLabel}</span>
           <p style="margin:8px 0 0;opacity:0.8;font-size:14px;">${now}</p>
         </div>
         
@@ -124,7 +130,7 @@ serve(async (req: Request) => {
     const { error } = await resend.emails.send({
       from: "Frota <onboarding@resend.dev>",
       to: ["compras@jng.com.br"],
-      subject: `Checklist Veicular — ${vehiclePlate} ${problems.length > 0 ? `(${problems.length} problema${problems.length > 1 ? "s" : ""})` : "(Tudo OK)"}`,
+      subject: `${typeLabel} — ${vehiclePlate} ${problems.length > 0 ? `(${problems.length} problema${problems.length > 1 ? "s" : ""})` : "(Tudo OK)"}`,
       html,
     });
 

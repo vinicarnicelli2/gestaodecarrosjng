@@ -1,6 +1,6 @@
 import { useState, useCallback, useEffect } from "react";
 import AppLayout from "@/components/AppLayout";
-import { ClipboardCheck, Send } from "lucide-react";
+import { ClipboardCheck, Send, ArrowDownLeft, ArrowUpRight } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
@@ -26,10 +26,21 @@ const checklistItems = [
 
 type CheckValue = "ok" | "problema" | "";
 
+interface ReservationOption {
+  id: string;
+  vehicle_id: string;
+  start_date: string;
+  end_date: string;
+  reason: string;
+  status: string;
+  hasPickupChecklist: boolean;
+  hasReturnChecklist: boolean;
+}
+
 const Checklist = () => {
   const { user } = useAuth();
-  const [vehicleId, setVehicleId] = useState("");
-  const [driverId, setDriverId] = useState("");
+  const [reservationId, setReservationId] = useState("");
+  const [checklistType, setChecklistType] = useState<"retirada" | "devolucao" | "">("");
   const [km, setKm] = useState("");
   const [checks, setChecks] = useState<Record<string, CheckValue>>(
     Object.fromEntries(checklistItems.map((item) => [item.id, ""]))
@@ -38,13 +49,71 @@ const Checklist = () => {
   const [sending, setSending] = useState(false);
   const [photos, setPhotos] = useState<{ file: File; preview: string }[]>([]);
   const [uploadingPhotos, setUploadingPhotos] = useState(false);
-  const [dbVehicles, setDbVehicles] = useState<{ id: string; plate: string; model: string }[]>([]);
-  const [dbDrivers, setDbDrivers] = useState<{ id: string; name: string }[]>([]);
+  const [vehicles, setVehicles] = useState<{ id: string; plate: string; model: string }[]>([]);
+  const [reservations, setReservations] = useState<ReservationOption[]>([]);
+  const [drivers, setDrivers] = useState<{ id: string; name: string }[]>([]);
+  const [profiles, setProfiles] = useState<Record<string, string>>({});
 
   useEffect(() => {
-    supabase.from("vehicles").select("id, plate, model").order("plate").then(({ data }) => setDbVehicles(data ?? []));
-    supabase.from("drivers").select("id, name").order("name").then(({ data }) => setDbDrivers(data ?? []));
+    const fetchData = async () => {
+      const [vehRes, drvRes, resRes, chkRes, profRes] = await Promise.all([
+        supabase.from("vehicles").select("id, plate, model").order("plate"),
+        supabase.from("drivers").select("id, name").order("name"),
+        supabase.from("reservations").select("*").eq("status", "aprovada").order("start_date"),
+        supabase.from("checklists").select("reservation_id, checklist_type"),
+        supabase.from("profiles").select("user_id, display_name"),
+      ]);
+
+      setVehicles(vehRes.data ?? []);
+      setDrivers(drvRes.data ?? []);
+
+      const pMap: Record<string, string> = {};
+      (profRes.data ?? []).forEach((p: any) => { pMap[p.user_id] = p.display_name; });
+      setProfiles(pMap);
+
+      // Build reservation options with checklist status
+      const existingChecklists = chkRes.data ?? [];
+      const resOptions: ReservationOption[] = (resRes.data ?? []).map((r: any) => {
+        const hasPickup = existingChecklists.some(
+          (c: any) => c.reservation_id === r.id && c.checklist_type === "retirada"
+        );
+        const hasReturn = existingChecklists.some(
+          (c: any) => c.reservation_id === r.id && c.checklist_type === "devolucao"
+        );
+        return {
+          id: r.id,
+          vehicle_id: r.vehicle_id,
+          start_date: r.start_date,
+          end_date: r.end_date,
+          reason: r.reason,
+          status: r.status,
+          hasPickupChecklist: hasPickup,
+          hasReturnChecklist: hasReturn,
+        };
+      });
+
+      // Only show reservations that still need at least one checklist
+      setReservations(resOptions.filter(r => !r.hasPickupChecklist || !r.hasReturnChecklist));
+    };
+
+    fetchData();
   }, []);
+
+  // Auto-detect checklist type when reservation is selected
+  useEffect(() => {
+    if (!reservationId) {
+      setChecklistType("");
+      return;
+    }
+    const res = reservations.find(r => r.id === reservationId);
+    if (!res) return;
+
+    if (!res.hasPickupChecklist) {
+      setChecklistType("retirada");
+    } else if (!res.hasReturnChecklist) {
+      setChecklistType("devolucao");
+    }
+  }, [reservationId, reservations]);
 
   const handleCheck = (id: string, value: CheckValue) => {
     setChecks((prev) => ({ ...prev, [id]: value }));
@@ -70,29 +139,24 @@ const Checklist = () => {
   const uploadPhotos = async (): Promise<string[]> => {
     const urls: string[] = [];
     const timestamp = Date.now();
-
     for (let i = 0; i < photos.length; i++) {
       const photo = photos[i];
       const ext = photo.file.name.split(".").pop() || "jpg";
       const path = `${timestamp}_${i}.${ext}`;
-
       const { error } = await supabase.storage
         .from("checklist-photos")
         .upload(path, photo.file, { contentType: photo.file.type });
-
       if (error) throw new Error(`Erro ao enviar foto ${i + 1}: ${error.message}`);
-
-      const { data: urlData } = supabase.storage
-        .from("checklist-photos")
-        .getPublicUrl(path);
-
+      const { data: urlData } = supabase.storage.from("checklist-photos").getPublicUrl(path);
       urls.push(urlData.publicUrl);
     }
-
     return urls;
   };
 
-  const allFilled = Object.values(checks).every((v) => v !== "") && vehicleId && driverId && km;
+  const selectedReservation = reservations.find(r => r.id === reservationId);
+  const selectedVehicle = selectedReservation ? vehicles.find(v => v.id === selectedReservation.vehicle_id) : null;
+
+  const allFilled = Object.values(checks).every((v) => v !== "") && reservationId && checklistType && km;
 
   const handleSubmit = async () => {
     if (!allFilled) {
@@ -110,19 +174,20 @@ const Checklist = () => {
         setUploadingPhotos(false);
       }
 
-      const vehicle = dbVehicles.find((v) => v.id === vehicleId);
-      const driver = dbDrivers.find((d) => d.id === driverId);
+      const driverName = user ? (profiles[user.id] ?? user.email ?? "Operador") : "Operador";
+      const typeLabel = checklistType === "retirada" ? "Retirada" : "Devolução";
 
-      const { data, error } = await supabase.functions.invoke("send-checklist", {
+      const { error } = await supabase.functions.invoke("send-checklist", {
         body: {
-          vehiclePlate: vehicle?.plate,
-          vehicleModel: vehicle?.model,
-          driverName: driver?.name,
+          vehiclePlate: selectedVehicle?.plate ?? "",
+          vehicleModel: selectedVehicle?.model ?? "",
+          driverName,
           km,
           checks,
           checklistItems,
           observations,
           photoUrls,
+          checklistType: typeLabel,
         },
       });
 
@@ -131,25 +196,27 @@ const Checklist = () => {
       // Save to database
       const problemCount = Object.values(checks).filter((v) => v === "problema").length;
       const { error: dbError } = await supabase.from("checklists").insert({
-        vehicle_plate: vehicle?.plate ?? "",
-        vehicle_model: vehicle?.model ?? "",
-        driver_name: driver?.name ?? "",
+        vehicle_plate: selectedVehicle?.plate ?? "",
+        vehicle_model: selectedVehicle?.model ?? "",
+        driver_name: driverName,
         km,
         checks,
         observations,
         photo_urls: photoUrls,
         problem_count: problemCount,
         user_id: user?.id,
+        checklist_type: checklistType,
+        reservation_id: reservationId,
       });
 
       if (dbError) console.error("Erro ao salvar no banco:", dbError);
 
-      toast.success("Checklist enviado com sucesso para compras@jng.com.br!");
+      toast.success(`Checklist de ${typeLabel} enviado com sucesso!`);
 
       // Reset form
       photos.forEach((p) => URL.revokeObjectURL(p.preview));
-      setVehicleId("");
-      setDriverId("");
+      setReservationId("");
+      setChecklistType("");
       setKm("");
       setChecks(Object.fromEntries(checklistItems.map((item) => [item.id, ""])));
       setObservations("");
@@ -170,55 +237,77 @@ const Checklist = () => {
       <div className="mb-8">
         <h1 className="text-3xl font-display font-bold">Checklist Veicular</h1>
         <p className="text-muted-foreground mt-1">
-          Preencha a inspeção e envie para{" "}
-          <span className="font-medium text-foreground">compras@jng.com.br</span>
+          Selecione uma reserva aprovada para preencher o checklist de retirada ou devolução
         </p>
       </div>
 
       <div className="max-w-3xl space-y-6">
-        {/* Vehicle & Driver selection */}
+        {/* Reservation selection */}
         <div className="bg-card rounded-lg border p-6 animate-fade-in space-y-4">
           <h2 className="font-display font-semibold text-lg flex items-center gap-2">
             <ClipboardCheck size={20} className="text-accent" />
-            Informações Gerais
+            Reserva e Informações
           </h2>
 
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-            <div>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div className="sm:col-span-2">
               <label className="block text-sm font-medium text-muted-foreground mb-1.5">
-                Veículo
+                Reserva Aprovada
               </label>
               <select
-                value={vehicleId}
-                onChange={(e) => setVehicleId(e.target.value)}
+                value={reservationId}
+                onChange={(e) => setReservationId(e.target.value)}
                 className="w-full rounded-lg border border-input bg-background px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-ring"
               >
-                <option value="">Selecione...</option>
-                {dbVehicles.map((v) => (
-                  <option key={v.id} value={v.id}>
-                    {v.plate} — {v.model}
-                  </option>
-                ))}
+                <option value="">Selecione uma reserva...</option>
+                {reservations.map((r) => {
+                  const v = vehicles.find(veh => veh.id === r.vehicle_id);
+                  const pending = !r.hasPickupChecklist ? "Retirada" : "Devolução";
+                  return (
+                    <option key={r.id} value={r.id}>
+                      {v?.plate} — {v?.model} • {new Date(r.start_date).toLocaleDateString("pt-BR")} → {new Date(r.end_date).toLocaleDateString("pt-BR")} ({pending} pendente)
+                    </option>
+                  );
+                })}
               </select>
             </div>
 
-            <div>
-              <label className="block text-sm font-medium text-muted-foreground mb-1.5">
-                Motorista
-              </label>
-              <select
-                value={driverId}
-                onChange={(e) => setDriverId(e.target.value)}
-                className="w-full rounded-lg border border-input bg-background px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-ring"
-              >
-                <option value="">Selecione...</option>
-                {dbDrivers.map((d) => (
-                  <option key={d.id} value={d.id}>
-                    {d.name}
-                  </option>
-                ))}
-              </select>
-            </div>
+            {reservationId && checklistType && (
+              <div className="sm:col-span-2">
+                <div className={`flex items-center gap-3 p-4 rounded-lg border ${
+                  checklistType === "retirada" 
+                    ? "bg-accent/10 border-accent/30" 
+                    : "bg-primary/10 border-primary/30"
+                }`}>
+                  {checklistType === "retirada" ? (
+                    <ArrowUpRight size={20} className="text-accent" />
+                  ) : (
+                    <ArrowDownLeft size={20} className="text-primary" />
+                  )}
+                  <div>
+                    <p className="font-semibold text-sm">
+                      Checklist de {checklistType === "retirada" ? "Retirada" : "Devolução"}
+                    </p>
+                    <p className="text-xs text-muted-foreground">
+                      {checklistType === "retirada"
+                        ? "Inspeção antes da saída do veículo"
+                        : "Inspeção no retorno do veículo"}
+                    </p>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {selectedVehicle && (
+              <div>
+                <label className="block text-sm font-medium text-muted-foreground mb-1.5">
+                  Veículo
+                </label>
+                <div className="w-full rounded-lg border border-input bg-muted/50 px-3 py-2.5 text-sm">
+                  {selectedVehicle.plate} — {selectedVehicle.model}
+                </div>
+              </div>
+            )}
 
             <div>
               <label className="block text-sm font-medium text-muted-foreground mb-1.5">
@@ -322,7 +411,7 @@ const Checklist = () => {
             ? uploadingPhotos
               ? "Enviando fotos..."
               : "Enviando checklist..."
-            : "Enviar Checklist para compras@jng.com.br"}
+            : `Enviar Checklist de ${checklistType === "retirada" ? "Retirada" : checklistType === "devolucao" ? "Devolução" : "..."}`}
         </button>
       </div>
     </AppLayout>
