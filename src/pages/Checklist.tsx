@@ -446,6 +446,15 @@ const Checklist = () => {
               Li e aceito os termos de responsabilidade acima. Estou ciente de que danos causados ao veículo serão descontados.
             </span>
           </label>
+
+          {acceptedTerms && (
+            <div className="pt-3 border-t border-border">
+              <SignaturePad onSignatureChange={setSignatureDataUrl} />
+              {!signatureDataUrl && (
+                <p className="text-xs text-destructive mt-1">* Assinatura obrigatória para enviar o checklist</p>
+              )}
+            </div>
+          )}
         </div>
 
         {/* Submit */}
