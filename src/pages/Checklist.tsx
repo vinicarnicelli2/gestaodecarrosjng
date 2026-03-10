@@ -49,6 +49,7 @@ const Checklist = () => {
   const [sending, setSending] = useState(false);
   const [photos, setPhotos] = useState<{ file: File; preview: string }[]>([]);
   const [uploadingPhotos, setUploadingPhotos] = useState(false);
+  const [acceptedTerms, setAcceptedTerms] = useState(false);
   const [vehicles, setVehicles] = useState<{ id: string; plate: string; model: string }[]>([]);
   const [reservations, setReservations] = useState<ReservationOption[]>([]);
   const [drivers, setDrivers] = useState<{ id: string; name: string }[]>([]);
