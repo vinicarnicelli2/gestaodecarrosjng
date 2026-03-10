@@ -232,6 +232,20 @@ const Checklist = () => {
 
       toast.success(`Checklist de ${typeLabel} enviado com sucesso!`);
 
+      // Generate PDF
+      generateChecklistPdf({
+        vehiclePlate: selectedVehicle?.plate ?? "",
+        vehicleModel: selectedVehicle?.model ?? "",
+        driverName,
+        km,
+        checklistType: typeLabel,
+        checks,
+        checklistItems,
+        observations,
+        signatureDataUrl,
+        date: new Date().toLocaleDateString("pt-BR"),
+      });
+
       // Reset form
       photos.forEach((p) => URL.revokeObjectURL(p.preview));
       setReservationId("");
