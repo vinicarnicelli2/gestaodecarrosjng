@@ -6,6 +6,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import PhotoUpload from "@/components/checklist/PhotoUpload";
 import SignaturePad from "@/components/checklist/SignaturePad";
+import { generateChecklistPdf } from "@/components/checklist/generateChecklistPdf";
 
 const checklistItems = [
   { id: "pneus", label: "Pneus (calibragem e estado)" },
@@ -230,6 +231,20 @@ const Checklist = () => {
       if (dbError) console.error("Erro ao salvar no banco:", dbError);
 
       toast.success(`Checklist de ${typeLabel} enviado com sucesso!`);
+
+      // Generate PDF
+      generateChecklistPdf({
+        vehiclePlate: selectedVehicle?.plate ?? "",
+        vehicleModel: selectedVehicle?.model ?? "",
+        driverName,
+        km,
+        checklistType: typeLabel,
+        checks,
+        checklistItems,
+        observations,
+        signatureDataUrl,
+        date: new Date().toLocaleDateString("pt-BR"),
+      });
 
       // Reset form
       photos.forEach((p) => URL.revokeObjectURL(p.preview));
