@@ -402,6 +402,35 @@ const Checklist = () => {
           <p className="text-xs text-muted-foreground mt-1">{observations.length}/500</p>
         </div>
 
+        {/* Termo de Aceite */}
+        <div className="bg-card rounded-lg border border-destructive/30 p-6 animate-fade-in space-y-4">
+          <h2 className="font-display font-semibold text-lg text-destructive">
+            Termo de Responsabilidade
+          </h2>
+          <div className="text-sm text-muted-foreground leading-relaxed space-y-2">
+            <p>
+              Ao assinar este termo, declaro que recebi o veículo nas condições descritas acima e estou ciente de que:
+            </p>
+            <ul className="list-disc list-inside space-y-1 ml-2">
+              <li>Quaisquer <strong className="text-foreground">danos causados</strong> ao veículo durante o período de utilização serão de minha inteira responsabilidade.</li>
+              <li>Os custos de reparo dos danos identificados na devolução, que não constavam na retirada, <strong className="text-foreground">serão descontados</strong> conforme política da empresa.</li>
+              <li>Comprometo-me a utilizar o veículo de forma adequada, respeitando as leis de trânsito e normas internas.</li>
+              <li>Multas de trânsito ocorridas durante o período de uso são de minha responsabilidade.</li>
+            </ul>
+          </div>
+          <label className="flex items-start gap-3 cursor-pointer pt-2 border-t border-border">
+            <input
+              type="checkbox"
+              checked={acceptedTerms}
+              onChange={(e) => setAcceptedTerms(e.target.checked)}
+              className="mt-1 h-5 w-5 rounded border-input accent-accent"
+            />
+            <span className="text-sm font-medium">
+              Li e aceito os termos de responsabilidade acima. Estou ciente de que danos causados ao veículo serão descontados.
+            </span>
+          </label>
+        </div>
+
         {/* Submit */}
         <button
           onClick={handleSubmit}
