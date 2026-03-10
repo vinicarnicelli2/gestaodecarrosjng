@@ -6,6 +6,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import PhotoUpload from "@/components/checklist/PhotoUpload";
 import SignaturePad from "@/components/checklist/SignaturePad";
+import { generateChecklistPdf } from "@/components/checklist/generateChecklistPdf";
 
 const checklistItems = [
   { id: "pneus", label: "Pneus (calibragem e estado)" },
