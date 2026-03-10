@@ -218,6 +218,7 @@ const Checklist = () => {
       photos.forEach((p) => URL.revokeObjectURL(p.preview));
       setReservationId("");
       setChecklistType("");
+      setAcceptedTerms(false);
       setKm("");
       setChecks(Object.fromEntries(checklistItems.map((item) => [item.id, ""])));
       setObservations("");
