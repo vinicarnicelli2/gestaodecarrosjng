@@ -204,6 +204,7 @@ const Checklist = () => {
           observations,
           photoUrls,
           checklistType: typeLabel,
+          signatureUrl: signatureUrl,
         },
       });
 
@@ -223,7 +224,8 @@ const Checklist = () => {
         user_id: user?.id,
         checklist_type: checklistType,
         reservation_id: reservationId,
-      });
+        signature_url: signatureUrl,
+      } as any);
 
       if (dbError) console.error("Erro ao salvar no banco:", dbError);
 
