@@ -1,0 +1,1 @@
+ALTER TABLE public.checklists ADD COLUMN signature_url text;

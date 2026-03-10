@@ -5,6 +5,7 @@ import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import PhotoUpload from "@/components/checklist/PhotoUpload";
+import SignaturePad from "@/components/checklist/SignaturePad";
 
 const checklistItems = [
   { id: "pneus", label: "Pneus (calibragem e estado)" },
@@ -50,6 +51,7 @@ const Checklist = () => {
   const [photos, setPhotos] = useState<{ file: File; preview: string }[]>([]);
   const [uploadingPhotos, setUploadingPhotos] = useState(false);
   const [acceptedTerms, setAcceptedTerms] = useState(false);
+  const [signatureDataUrl, setSignatureDataUrl] = useState<string | null>(null);
   const [vehicles, setVehicles] = useState<{ id: string; plate: string; model: string }[]>([]);
   const [reservations, setReservations] = useState<ReservationOption[]>([]);
   const [drivers, setDrivers] = useState<{ id: string; name: string }[]>([]);
@@ -157,7 +159,7 @@ const Checklist = () => {
   const selectedReservation = reservations.find(r => r.id === reservationId);
   const selectedVehicle = selectedReservation ? vehicles.find(v => v.id === selectedReservation.vehicle_id) : null;
 
-  const allFilled = Object.values(checks).every((v) => v !== "") && reservationId && checklistType && km && acceptedTerms;
+  const allFilled = Object.values(checks).every((v) => v !== "") && reservationId && checklistType && km && acceptedTerms && !!signatureDataUrl;
 
   const handleSubmit = async () => {
     if (!allFilled) {
@@ -168,6 +170,19 @@ const Checklist = () => {
     setSending(true);
 
     try {
+      // Upload signature
+      let signatureUrl = "";
+      if (signatureDataUrl) {
+        const blob = await (await fetch(signatureDataUrl)).blob();
+        const sigPath = `signatures/${Date.now()}_signature.png`;
+        const { error: sigError } = await supabase.storage
+          .from("checklist-photos")
+          .upload(sigPath, blob, { contentType: "image/png" });
+        if (sigError) throw new Error("Erro ao enviar assinatura: " + sigError.message);
+        const { data: sigUrlData } = supabase.storage.from("checklist-photos").getPublicUrl(sigPath);
+        signatureUrl = sigUrlData.publicUrl;
+      }
+
       let photoUrls: string[] = [];
       if (photos.length > 0) {
         setUploadingPhotos(true);
@@ -189,6 +204,7 @@ const Checklist = () => {
           observations,
           photoUrls,
           checklistType: typeLabel,
+          signatureUrl: signatureUrl,
         },
       });
 
@@ -208,7 +224,8 @@ const Checklist = () => {
         user_id: user?.id,
         checklist_type: checklistType,
         reservation_id: reservationId,
-      });
+        signature_url: signatureUrl,
+      } as any);
 
       if (dbError) console.error("Erro ao salvar no banco:", dbError);
 
@@ -219,7 +236,7 @@ const Checklist = () => {
       setReservationId("");
       setChecklistType("");
       setAcceptedTerms(false);
-      setKm("");
+      setSignatureDataUrl(null);
       setChecks(Object.fromEntries(checklistItems.map((item) => [item.id, ""])));
       setObservations("");
       setPhotos([]);
@@ -429,6 +446,15 @@ const Checklist = () => {
               Li e aceito os termos de responsabilidade acima. Estou ciente de que danos causados ao veículo serão descontados.
             </span>
           </label>
+
+          {acceptedTerms && (
+            <div className="pt-3 border-t border-border">
+              <SignaturePad onSignatureChange={setSignatureDataUrl} />
+              {!signatureDataUrl && (
+                <p className="text-xs text-destructive mt-1">* Assinatura obrigatória para enviar o checklist</p>
+              )}
+            </div>
+          )}
         </div>
 
         {/* Submit */}
