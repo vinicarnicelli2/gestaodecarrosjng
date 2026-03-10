@@ -26,6 +26,7 @@ export type Database = {
           photo_urls: string[] | null
           problem_count: number
           reservation_id: string | null
+          signature_url: string | null
           user_id: string | null
           vehicle_model: string
           vehicle_plate: string
@@ -41,6 +42,7 @@ export type Database = {
           photo_urls?: string[] | null
           problem_count?: number
           reservation_id?: string | null
+          signature_url?: string | null
           user_id?: string | null
           vehicle_model: string
           vehicle_plate: string
@@ -56,6 +58,7 @@ export type Database = {
           photo_urls?: string[] | null
           problem_count?: number
           reservation_id?: string | null
+          signature_url?: string | null
           user_id?: string | null
           vehicle_model?: string
           vehicle_plate?: string
