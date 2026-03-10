@@ -157,7 +157,7 @@ const Checklist = () => {
   const selectedReservation = reservations.find(r => r.id === reservationId);
   const selectedVehicle = selectedReservation ? vehicles.find(v => v.id === selectedReservation.vehicle_id) : null;
 
-  const allFilled = Object.values(checks).every((v) => v !== "") && reservationId && checklistType && km;
+  const allFilled = Object.values(checks).every((v) => v !== "") && reservationId && checklistType && km && acceptedTerms;
 
   const handleSubmit = async () => {
     if (!allFilled) {
