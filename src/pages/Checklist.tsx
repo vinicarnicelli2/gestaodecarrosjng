@@ -236,7 +236,7 @@ const Checklist = () => {
       setReservationId("");
       setChecklistType("");
       setAcceptedTerms(false);
-      setKm("");
+      setSignatureDataUrl(null);
       setChecks(Object.fromEntries(checklistItems.map((item) => [item.id, ""])));
       setObservations("");
       setPhotos([]);
