@@ -170,6 +170,19 @@ const Checklist = () => {
     setSending(true);
 
     try {
+      // Upload signature
+      let signatureUrl = "";
+      if (signatureDataUrl) {
+        const blob = await (await fetch(signatureDataUrl)).blob();
+        const sigPath = `signatures/${Date.now()}_signature.png`;
+        const { error: sigError } = await supabase.storage
+          .from("checklist-photos")
+          .upload(sigPath, blob, { contentType: "image/png" });
+        if (sigError) throw new Error("Erro ao enviar assinatura: " + sigError.message);
+        const { data: sigUrlData } = supabase.storage.from("checklist-photos").getPublicUrl(sigPath);
+        signatureUrl = sigUrlData.publicUrl;
+      }
+
       let photoUrls: string[] = [];
       if (photos.length > 0) {
         setUploadingPhotos(true);
