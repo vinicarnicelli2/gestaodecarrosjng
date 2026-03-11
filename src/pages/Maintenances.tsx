@@ -158,6 +158,43 @@ const Maintenances = () => {
         </Button>
       </div>
 
+      {/* Relatório de Custos */}
+      {maintenances.length > 0 && (() => {
+        const totalCost = maintenances.reduce((sum, m) => sum + Number(m.cost), 0);
+        const completedCost = maintenances.filter(m => m.status === "concluída").reduce((sum, m) => sum + Number(m.cost), 0);
+        const pendingCost = maintenances.filter(m => m.status !== "concluída").reduce((sum, m) => sum + Number(m.cost), 0);
+        const costByType = maintenances.reduce((acc, m) => {
+          acc[m.type] = (acc[m.type] || 0) + Number(m.cost);
+          return acc;
+        }, {} as Record<string, number>);
+        const topType = Object.entries(costByType).sort((a, b) => b[1] - a[1])[0];
+
+        return (
+          <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4 mb-6">
+            <div className="bg-card rounded-lg border p-4">
+              <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-1">Custo Total</p>
+              <p className="text-2xl font-bold text-foreground">R$ {totalCost.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}</p>
+              <p className="text-xs text-muted-foreground mt-1">{maintenances.length} manutenções</p>
+            </div>
+            <div className="bg-card rounded-lg border p-4">
+              <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-1">Concluídas</p>
+              <p className="text-2xl font-bold text-green-600">R$ {completedCost.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}</p>
+              <p className="text-xs text-muted-foreground mt-1">{maintenances.filter(m => m.status === "concluída").length} finalizadas</p>
+            </div>
+            <div className="bg-card rounded-lg border p-4">
+              <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-1">Pendentes / Em andamento</p>
+              <p className="text-2xl font-bold text-amber-600">R$ {pendingCost.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}</p>
+              <p className="text-xs text-muted-foreground mt-1">{maintenances.filter(m => m.status !== "concluída").length} em aberto</p>
+            </div>
+            <div className="bg-card rounded-lg border p-4">
+              <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-1">Maior Custo por Tipo</p>
+              <p className="text-2xl font-bold text-foreground">{topType ? topType[0] : "-"}</p>
+              <p className="text-xs text-muted-foreground mt-1">{topType ? `R$ ${topType[1].toLocaleString("pt-BR", { minimumFractionDigits: 2 })}` : "-"}</p>
+            </div>
+          </div>
+        );
+      })()}
+
       <div className="bg-card rounded-lg border overflow-hidden">
         <div className="overflow-x-auto">
           <table className="w-full">
