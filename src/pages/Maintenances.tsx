@@ -11,6 +11,8 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "
 import { Textarea } from "@/components/ui/textarea";
 import { toast } from "sonner";
 import { Plus, Pencil, Trash2 } from "lucide-react";
+import { ChartContainer, ChartTooltip, ChartTooltipContent } from "@/components/ui/chart";
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid } from "recharts";
 
 interface MaintenanceRow {
   id: string;
@@ -191,6 +193,40 @@ const Maintenances = () => {
               <p className="text-2xl font-bold text-foreground">{topType ? topType[0] : "-"}</p>
               <p className="text-xs text-muted-foreground mt-1">{topType ? `R$ ${topType[1].toLocaleString("pt-BR", { minimumFractionDigits: 2 })}` : "-"}</p>
             </div>
+          </div>
+        );
+      })()}
+
+      {/* Gráfico de Custos por Mês */}
+      {maintenances.length > 0 && (() => {
+        const monthlyData: Record<string, number> = {};
+        maintenances.forEach((m) => {
+          const d = new Date(m.date);
+          const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`;
+          monthlyData[key] = (monthlyData[key] || 0) + Number(m.cost);
+        });
+        const chartData = Object.entries(monthlyData)
+          .sort(([a], [b]) => a.localeCompare(b))
+          .slice(-12)
+          .map(([month, total]) => {
+            const [y, m] = month.split("-");
+            return { month: `${m}/${y}`, total };
+          });
+        const chartConfig = {
+          total: { label: "Custo (R$)", color: "hsl(var(--primary))" },
+        };
+        return (
+          <div className="bg-card rounded-lg border p-6 mb-6">
+            <h2 className="text-lg font-semibold mb-4">Custos por Mês</h2>
+            <ChartContainer config={chartConfig} className="h-[300px] w-full">
+              <BarChart data={chartData}>
+                <CartesianGrid strokeDasharray="3 3" className="stroke-border" />
+                <XAxis dataKey="month" className="text-xs" />
+                <YAxis className="text-xs" tickFormatter={(v) => `R$${v}`} />
+                <ChartTooltip content={<ChartTooltipContent />} />
+                <Bar dataKey="total" fill="var(--color-total)" radius={[4, 4, 0, 0]} />
+              </BarChart>
+            </ChartContainer>
           </div>
         );
       })()}
