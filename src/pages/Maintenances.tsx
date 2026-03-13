@@ -235,10 +235,10 @@ const Maintenances = () => {
 
       {/* Relatório de Custos */}
       {filteredMaintenances.length > 0 && (() => {
-        const totalCost = maintenances.reduce((sum, m) => sum + Number(m.cost), 0);
-        const completedCost = maintenances.filter(m => m.status === "concluída").reduce((sum, m) => sum + Number(m.cost), 0);
-        const pendingCost = maintenances.filter(m => m.status !== "concluída").reduce((sum, m) => sum + Number(m.cost), 0);
-        const costByType = maintenances.reduce((acc, m) => {
+        const totalCost = filteredMaintenances.reduce((sum, m) => sum + Number(m.cost), 0);
+        const completedCost = filteredMaintenances.filter(m => m.status === "concluída").reduce((sum, m) => sum + Number(m.cost), 0);
+        const pendingCost = filteredMaintenances.filter(m => m.status !== "concluída").reduce((sum, m) => sum + Number(m.cost), 0);
+        const costByType = filteredMaintenances.reduce((acc, m) => {
           acc[m.type] = (acc[m.type] || 0) + Number(m.cost);
           return acc;
         }, {} as Record<string, number>);
@@ -249,17 +249,17 @@ const Maintenances = () => {
             <div className="bg-card rounded-lg border p-4">
               <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-1">Custo Total</p>
               <p className="text-2xl font-bold text-foreground">R$ {totalCost.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}</p>
-              <p className="text-xs text-muted-foreground mt-1">{maintenances.length} manutenções</p>
+              <p className="text-xs text-muted-foreground mt-1">{filteredMaintenances.length} manutenções</p>
             </div>
             <div className="bg-card rounded-lg border p-4">
               <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-1">Concluídas</p>
               <p className="text-2xl font-bold text-green-600">R$ {completedCost.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}</p>
-              <p className="text-xs text-muted-foreground mt-1">{maintenances.filter(m => m.status === "concluída").length} finalizadas</p>
+              <p className="text-xs text-muted-foreground mt-1">{filteredMaintenances.filter(m => m.status === "concluída").length} finalizadas</p>
             </div>
             <div className="bg-card rounded-lg border p-4">
               <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-1">Pendentes / Em andamento</p>
               <p className="text-2xl font-bold text-amber-600">R$ {pendingCost.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}</p>
-              <p className="text-xs text-muted-foreground mt-1">{maintenances.filter(m => m.status !== "concluída").length} em aberto</p>
+              <p className="text-xs text-muted-foreground mt-1">{filteredMaintenances.filter(m => m.status !== "concluída").length} em aberto</p>
             </div>
             <div className="bg-card rounded-lg border p-4">
               <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-1">Maior Custo por Tipo</p>
