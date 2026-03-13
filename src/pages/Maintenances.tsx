@@ -10,9 +10,10 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Textarea } from "@/components/ui/textarea";
 import { toast } from "sonner";
-import { Plus, Pencil, Trash2 } from "lucide-react";
+import { Plus, Pencil, Trash2, Filter } from "lucide-react";
 import { ChartContainer, ChartTooltip, ChartTooltipContent } from "@/components/ui/chart";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid } from "recharts";
+import { useMemo } from "react";
 
 interface MaintenanceRow {
   id: string;
@@ -42,6 +43,9 @@ const Maintenances = () => {
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [form, setForm] = useState(emptyForm);
+  const [filterVehicle, setFilterVehicle] = useState("all");
+  const [filterType, setFilterType] = useState("all");
+  const [filterMonth, setFilterMonth] = useState("all");
 
   const { data: maintenances = [], isLoading } = useQuery({
     queryKey: ["maintenances"],
@@ -63,6 +67,32 @@ const Maintenances = () => {
       return data;
     },
   });
+
+  const availableMonths = useMemo(() => {
+    const months = new Set<string>();
+    maintenances.forEach((m) => {
+      const d = new Date(m.date);
+      months.add(`${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`);
+    });
+    return Array.from(months).sort().reverse();
+  }, [maintenances]);
+
+  const availableTypes = useMemo(() => {
+    return Array.from(new Set(maintenances.map((m) => m.type))).sort();
+  }, [maintenances]);
+
+  const filteredMaintenances = useMemo(() => {
+    return maintenances.filter((m) => {
+      if (filterVehicle !== "all" && m.vehicle_id !== filterVehicle) return false;
+      if (filterType !== "all" && m.type !== filterType) return false;
+      if (filterMonth !== "all") {
+        const d = new Date(m.date);
+        const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`;
+        if (key !== filterMonth) return false;
+      }
+      return true;
+    });
+  }, [maintenances, filterVehicle, filterType, filterMonth]);
 
   const saveMutation = useMutation({
     mutationFn: async (formData: typeof emptyForm & { id?: string }) => {
@@ -160,12 +190,55 @@ const Maintenances = () => {
         </Button>
       </div>
 
+      {/* Filtros */}
+      <div className="flex flex-wrap gap-3 mb-6">
+        <div className="w-48">
+          <Select value={filterVehicle} onValueChange={setFilterVehicle}>
+            <SelectTrigger><Filter className="h-4 w-4 mr-2 text-muted-foreground" /><SelectValue placeholder="Veículo" /></SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">Todos os veículos</SelectItem>
+              {vehicles.map((v) => (
+                <SelectItem key={v.id} value={v.id}>{v.plate} - {v.model}</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+        <div className="w-44">
+          <Select value={filterType} onValueChange={setFilterType}>
+            <SelectTrigger><SelectValue placeholder="Tipo" /></SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">Todos os tipos</SelectItem>
+              {availableTypes.map((t) => (
+                <SelectItem key={t} value={t}>{t}</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+        <div className="w-40">
+          <Select value={filterMonth} onValueChange={setFilterMonth}>
+            <SelectTrigger><SelectValue placeholder="Mês" /></SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">Todos os meses</SelectItem>
+              {availableMonths.map((m) => {
+                const [y, mo] = m.split("-");
+                return <SelectItem key={m} value={m}>{mo}/{y}</SelectItem>;
+              })}
+            </SelectContent>
+          </Select>
+        </div>
+        {(filterVehicle !== "all" || filterType !== "all" || filterMonth !== "all") && (
+          <Button variant="ghost" size="sm" onClick={() => { setFilterVehicle("all"); setFilterType("all"); setFilterMonth("all"); }}>
+            Limpar filtros
+          </Button>
+        )}
+      </div>
+
       {/* Relatório de Custos */}
-      {maintenances.length > 0 && (() => {
-        const totalCost = maintenances.reduce((sum, m) => sum + Number(m.cost), 0);
-        const completedCost = maintenances.filter(m => m.status === "concluída").reduce((sum, m) => sum + Number(m.cost), 0);
-        const pendingCost = maintenances.filter(m => m.status !== "concluída").reduce((sum, m) => sum + Number(m.cost), 0);
-        const costByType = maintenances.reduce((acc, m) => {
+      {filteredMaintenances.length > 0 && (() => {
+        const totalCost = filteredMaintenances.reduce((sum, m) => sum + Number(m.cost), 0);
+        const completedCost = filteredMaintenances.filter(m => m.status === "concluída").reduce((sum, m) => sum + Number(m.cost), 0);
+        const pendingCost = filteredMaintenances.filter(m => m.status !== "concluída").reduce((sum, m) => sum + Number(m.cost), 0);
+        const costByType = filteredMaintenances.reduce((acc, m) => {
           acc[m.type] = (acc[m.type] || 0) + Number(m.cost);
           return acc;
         }, {} as Record<string, number>);
@@ -176,17 +249,17 @@ const Maintenances = () => {
             <div className="bg-card rounded-lg border p-4">
               <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-1">Custo Total</p>
               <p className="text-2xl font-bold text-foreground">R$ {totalCost.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}</p>
-              <p className="text-xs text-muted-foreground mt-1">{maintenances.length} manutenções</p>
+              <p className="text-xs text-muted-foreground mt-1">{filteredMaintenances.length} manutenções</p>
             </div>
             <div className="bg-card rounded-lg border p-4">
               <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-1">Concluídas</p>
               <p className="text-2xl font-bold text-green-600">R$ {completedCost.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}</p>
-              <p className="text-xs text-muted-foreground mt-1">{maintenances.filter(m => m.status === "concluída").length} finalizadas</p>
+              <p className="text-xs text-muted-foreground mt-1">{filteredMaintenances.filter(m => m.status === "concluída").length} finalizadas</p>
             </div>
             <div className="bg-card rounded-lg border p-4">
               <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-1">Pendentes / Em andamento</p>
               <p className="text-2xl font-bold text-amber-600">R$ {pendingCost.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}</p>
-              <p className="text-xs text-muted-foreground mt-1">{maintenances.filter(m => m.status !== "concluída").length} em aberto</p>
+              <p className="text-xs text-muted-foreground mt-1">{filteredMaintenances.filter(m => m.status !== "concluída").length} em aberto</p>
             </div>
             <div className="bg-card rounded-lg border p-4">
               <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-1">Maior Custo por Tipo</p>
@@ -198,9 +271,9 @@ const Maintenances = () => {
       })()}
 
       {/* Gráfico de Custos por Mês */}
-      {maintenances.length > 0 && (() => {
+      {filteredMaintenances.length > 0 && (() => {
         const monthlyData: Record<string, number> = {};
-        maintenances.forEach((m) => {
+        filteredMaintenances.forEach((m) => {
           const d = new Date(m.date);
           const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`;
           monthlyData[key] = (monthlyData[key] || 0) + Number(m.cost);
@@ -248,10 +321,10 @@ const Maintenances = () => {
             <tbody>
               {isLoading ? (
                 <tr><td colSpan={7} className="px-6 py-8 text-center text-muted-foreground">Carregando...</td></tr>
-              ) : maintenances.length === 0 ? (
-                <tr><td colSpan={7} className="px-6 py-8 text-center text-muted-foreground">Nenhuma manutenção cadastrada</td></tr>
+              ) : filteredMaintenances.length === 0 ? (
+                <tr><td colSpan={7} className="px-6 py-8 text-center text-muted-foreground">Nenhuma manutenção encontrada</td></tr>
               ) : (
-                maintenances.map((m, i) => (
+                filteredMaintenances.map((m, i) => (
                   <tr key={m.id} className="border-b last:border-0 hover:bg-muted/30 transition-colors" style={{ animationDelay: `${i * 50}ms` }}>
                     <td className="px-6 py-4 font-mono font-semibold text-sm">{m.vehicle_plate}</td>
                     <td className="px-6 py-4 text-sm font-medium">{m.type}</td>
