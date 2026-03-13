@@ -321,10 +321,10 @@ const Maintenances = () => {
             <tbody>
               {isLoading ? (
                 <tr><td colSpan={7} className="px-6 py-8 text-center text-muted-foreground">Carregando...</td></tr>
-              ) : maintenances.length === 0 ? (
-                <tr><td colSpan={7} className="px-6 py-8 text-center text-muted-foreground">Nenhuma manutenção cadastrada</td></tr>
+              ) : filteredMaintenances.length === 0 ? (
+                <tr><td colSpan={7} className="px-6 py-8 text-center text-muted-foreground">Nenhuma manutenção encontrada</td></tr>
               ) : (
-                maintenances.map((m, i) => (
+                filteredMaintenances.map((m, i) => (
                   <tr key={m.id} className="border-b last:border-0 hover:bg-muted/30 transition-colors" style={{ animationDelay: `${i * 50}ms` }}>
                     <td className="px-6 py-4 font-mono font-semibold text-sm">{m.vehicle_plate}</td>
                     <td className="px-6 py-4 text-sm font-medium">{m.type}</td>
