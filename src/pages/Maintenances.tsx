@@ -190,8 +190,51 @@ const Maintenances = () => {
         </Button>
       </div>
 
+      {/* Filtros */}
+      <div className="flex flex-wrap gap-3 mb-6">
+        <div className="w-48">
+          <Select value={filterVehicle} onValueChange={setFilterVehicle}>
+            <SelectTrigger><Filter className="h-4 w-4 mr-2 text-muted-foreground" /><SelectValue placeholder="Veículo" /></SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">Todos os veículos</SelectItem>
+              {vehicles.map((v) => (
+                <SelectItem key={v.id} value={v.id}>{v.plate} - {v.model}</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+        <div className="w-44">
+          <Select value={filterType} onValueChange={setFilterType}>
+            <SelectTrigger><SelectValue placeholder="Tipo" /></SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">Todos os tipos</SelectItem>
+              {availableTypes.map((t) => (
+                <SelectItem key={t} value={t}>{t}</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+        <div className="w-40">
+          <Select value={filterMonth} onValueChange={setFilterMonth}>
+            <SelectTrigger><SelectValue placeholder="Mês" /></SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">Todos os meses</SelectItem>
+              {availableMonths.map((m) => {
+                const [y, mo] = m.split("-");
+                return <SelectItem key={m} value={m}>{mo}/{y}</SelectItem>;
+              })}
+            </SelectContent>
+          </Select>
+        </div>
+        {(filterVehicle !== "all" || filterType !== "all" || filterMonth !== "all") && (
+          <Button variant="ghost" size="sm" onClick={() => { setFilterVehicle("all"); setFilterType("all"); setFilterMonth("all"); }}>
+            Limpar filtros
+          </Button>
+        )}
+      </div>
+
       {/* Relatório de Custos */}
-      {maintenances.length > 0 && (() => {
+      {filteredMaintenances.length > 0 && (() => {
         const totalCost = maintenances.reduce((sum, m) => sum + Number(m.cost), 0);
         const completedCost = maintenances.filter(m => m.status === "concluída").reduce((sum, m) => sum + Number(m.cost), 0);
         const pendingCost = maintenances.filter(m => m.status !== "concluída").reduce((sum, m) => sum + Number(m.cost), 0);
