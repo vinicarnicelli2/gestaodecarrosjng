@@ -12,7 +12,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { toast } from "sonner";
 import { Plus, Pencil, Trash2, Filter } from "lucide-react";
 import { ChartContainer, ChartTooltip, ChartTooltipContent } from "@/components/ui/chart";
-import { BarChart, Bar, XAxis, YAxis, CartesianGrid } from "recharts";
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid, PieChart, Pie, Cell, Legend, ResponsiveContainer } from "recharts";
 import { useMemo } from "react";
 
 interface MaintenanceRow {
@@ -299,6 +299,57 @@ const Maintenances = () => {
                 <ChartTooltip content={<ChartTooltipContent />} />
                 <Bar dataKey="total" fill="var(--color-total)" radius={[4, 4, 0, 0]} />
               </BarChart>
+            </ChartContainer>
+          </div>
+        );
+      })()}
+
+      {/* Gráfico de Pizza - Custos por Tipo */}
+      {filteredMaintenances.length > 0 && (() => {
+        const COLORS = [
+          "hsl(var(--primary))",
+          "hsl(210, 70%, 50%)",
+          "hsl(150, 60%, 45%)",
+          "hsl(35, 90%, 55%)",
+          "hsl(340, 65%, 50%)",
+          "hsl(270, 55%, 55%)",
+          "hsl(180, 50%, 45%)",
+          "hsl(15, 75%, 50%)",
+        ];
+        const costByType: Record<string, number> = {};
+        filteredMaintenances.forEach((m) => {
+          costByType[m.type] = (costByType[m.type] || 0) + Number(m.cost);
+        });
+        const pieData = Object.entries(costByType).map(([name, value]) => ({ name, value }));
+        const pieConfig = Object.fromEntries(
+          pieData.map((d, i) => [d.name, { label: d.name, color: COLORS[i % COLORS.length] }])
+        );
+
+        return (
+          <div className="bg-card rounded-lg border p-6 mb-6">
+            <h2 className="text-lg font-semibold mb-4">Distribuição de Custos por Tipo</h2>
+            <ChartContainer config={pieConfig} className="h-[350px] w-full">
+              <PieChart>
+                <Pie
+                  data={pieData}
+                  cx="50%"
+                  cy="50%"
+                  innerRadius={60}
+                  outerRadius={110}
+                  paddingAngle={3}
+                  dataKey="value"
+                  nameKey="name"
+                  label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}
+                >
+                  {pieData.map((_, i) => (
+                    <Cell key={i} fill={COLORS[i % COLORS.length]} />
+                  ))}
+                </Pie>
+                <ChartTooltip
+                  content={<ChartTooltipContent formatter={(value) => `R$ ${Number(value).toLocaleString("pt-BR", { minimumFractionDigits: 2 })}`} />}
+                />
+                <Legend />
+              </PieChart>
             </ChartContainer>
           </div>
         );
