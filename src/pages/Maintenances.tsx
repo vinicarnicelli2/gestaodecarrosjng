@@ -68,6 +68,32 @@ const Maintenances = () => {
     },
   });
 
+  const availableMonths = useMemo(() => {
+    const months = new Set<string>();
+    maintenances.forEach((m) => {
+      const d = new Date(m.date);
+      months.add(`${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`);
+    });
+    return Array.from(months).sort().reverse();
+  }, [maintenances]);
+
+  const availableTypes = useMemo(() => {
+    return Array.from(new Set(maintenances.map((m) => m.type))).sort();
+  }, [maintenances]);
+
+  const filteredMaintenances = useMemo(() => {
+    return maintenances.filter((m) => {
+      if (filterVehicle !== "all" && m.vehicle_id !== filterVehicle) return false;
+      if (filterType !== "all" && m.type !== filterType) return false;
+      if (filterMonth !== "all") {
+        const d = new Date(m.date);
+        const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`;
+        if (key !== filterMonth) return false;
+      }
+      return true;
+    });
+  }, [maintenances, filterVehicle, filterType, filterMonth]);
+
   const saveMutation = useMutation({
     mutationFn: async (formData: typeof emptyForm & { id?: string }) => {
       const { data: { user } } = await supabase.auth.getUser();
