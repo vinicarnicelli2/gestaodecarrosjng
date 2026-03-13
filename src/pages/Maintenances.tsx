@@ -42,6 +42,9 @@ const Maintenances = () => {
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [form, setForm] = useState(emptyForm);
+  const [filterVehicle, setFilterVehicle] = useState("all");
+  const [filterType, setFilterType] = useState("all");
+  const [filterMonth, setFilterMonth] = useState("all");
 
   const { data: maintenances = [], isLoading } = useQuery({
     queryKey: ["maintenances"],
