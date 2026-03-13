@@ -271,9 +271,9 @@ const Maintenances = () => {
       })()}
 
       {/* Gráfico de Custos por Mês */}
-      {maintenances.length > 0 && (() => {
+      {filteredMaintenances.length > 0 && (() => {
         const monthlyData: Record<string, number> = {};
-        maintenances.forEach((m) => {
+        filteredMaintenances.forEach((m) => {
           const d = new Date(m.date);
           const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`;
           monthlyData[key] = (monthlyData[key] || 0) + Number(m.cost);
