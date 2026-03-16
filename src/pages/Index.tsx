@@ -90,27 +90,6 @@ const Dashboard = () => {
   const expiredCNH = drivers.filter((d) => d.status === "cnh vencida").length;
   const oilAlerts = vehicles.filter((v) => (v.next_oil_change || 0) - v.km < 3000).length;
 
-  const profileMap = useMemo(() => {
-    const map: Record<string, string> = {};
-    profiles.forEach((p) => { map[p.user_id] = p.display_name; });
-    return map;
-  }, [profiles]);
-
-  // Monthly maintenance cost chart data
-  const chartData = useMemo(() => {
-    const monthly: Record<string, number> = {};
-    maintenances.forEach((m) => {
-      const month = m.date.slice(0, 7);
-      monthly[month] = (monthly[month] || 0) + Number(m.cost);
-    });
-    return Object.entries(monthly)
-      .sort(([a], [b]) => a.localeCompare(b))
-      .slice(-6)
-      .map(([month, total]) => ({
-        month: new Date(month + "-01").toLocaleDateString("pt-BR", { month: "short" }),
-        total,
-      }));
-  }, [maintenances]);
 
   return (
     <AppLayout>
