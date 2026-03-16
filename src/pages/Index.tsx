@@ -107,10 +107,52 @@ const Dashboard = () => {
         <StatCard title="Alertas de Óleo" value={oilAlerts} icon={<Droplets size={22} />} subtitle="Troca próxima" variant="warning" />
       </div>
 
-      {/* Charts + Lists */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
-        {/* Maintenance cost chart */}
+      {/* Charts row 1 */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-6">
+        {/* Vehicle status pie chart */}
         <div className="bg-card rounded-lg border p-6 animate-fade-in">
+          <div className="flex items-center gap-2 mb-4">
+            <Car size={18} className="text-primary" />
+            <h2 className="font-display font-semibold text-lg">Status dos Veículos</h2>
+          </div>
+          {vehicles.length > 0 ? (() => {
+            const statusCount: Record<string, number> = {};
+            vehicles.forEach((v) => {
+              statusCount[v.status] = (statusCount[v.status] || 0) + 1;
+            });
+            const pieData = Object.entries(statusCount).map(([name, value]) => ({ name, value }));
+            const COLORS: Record<string, string> = {
+              "disponível": "hsl(142, 71%, 45%)",
+              "em uso": "hsl(217, 91%, 60%)",
+              "manutenção": "hsl(0, 84%, 60%)",
+            };
+            return (
+              <ResponsiveContainer width="100%" height={220}>
+                <PieChart>
+                  <Pie
+                    data={pieData}
+                    cx="50%"
+                    cy="50%"
+                    innerRadius={50}
+                    outerRadius={80}
+                    dataKey="value"
+                    label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}
+                  >
+                    {pieData.map((entry, index) => (
+                      <Cell key={index} fill={COLORS[entry.name] || "#94a3b8"} />
+                    ))}
+                  </Pie>
+                  <Tooltip formatter={(value: number) => [value, "Veículos"]} />
+                </PieChart>
+              </ResponsiveContainer>
+            );
+          })() : (
+            <p className="text-muted-foreground text-sm">Sem veículos cadastrados</p>
+          )}
+        </div>
+
+        {/* Maintenance cost chart */}
+        <div className="bg-card rounded-lg border p-6 animate-fade-in lg:col-span-2">
           <div className="flex items-center gap-2 mb-4">
             <TrendingUp size={18} className="text-primary" />
             <h2 className="font-display font-semibold text-lg">Custos de Manutenção</h2>
