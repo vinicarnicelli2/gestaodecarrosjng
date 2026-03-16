@@ -1,6 +1,6 @@
 import { useState } from "react";
 import AppLayout from "@/components/AppLayout";
-import { Droplets, AlertTriangle, CheckCircle, Pencil } from "lucide-react";
+import { Droplets, AlertTriangle, CheckCircle, Pencil, Bell } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 
 const OilControl = () => {
   const { toast } = useToast();
@@ -58,12 +59,56 @@ const OilControl = () => {
 
   const sorted = [...vehicles].sort((a, b) => ((a.next_oil_change || 0) - a.km) - ((b.next_oil_change || 0) - b.km));
 
+  const criticalVehicles = vehicles.filter((v) => {
+    const remaining = (v.next_oil_change || 0) - v.km;
+    return remaining < 1000;
+  });
+
+  const warningVehicles = vehicles.filter((v) => {
+    const remaining = (v.next_oil_change || 0) - v.km;
+    return remaining >= 1000 && remaining < 3000;
+  });
+
   return (
     <AppLayout>
       <div className="mb-8">
         <h1 className="text-3xl font-display font-bold">Controle de Óleo</h1>
         <p className="text-muted-foreground mt-1">Monitoramento de troca de óleo dos veículos</p>
       </div>
+
+      {/* Critical alert banner */}
+      {criticalVehicles.length > 0 && (
+        <Alert variant="destructive" className="mb-4 border-destructive/50 bg-destructive/10">
+          <AlertTriangle className="h-5 w-5" />
+          <AlertTitle className="font-bold">
+            ⚠️ {criticalVehicles.length} veículo(s) com troca de óleo urgente!
+          </AlertTitle>
+          <AlertDescription>
+            {criticalVehicles.map((v) => (
+              <span key={v.id} className="inline-flex items-center mr-3 font-mono font-semibold">
+                {v.plate} ({((v.next_oil_change || 0) - v.km).toLocaleString("pt-BR")} km restantes)
+              </span>
+            ))}
+          </AlertDescription>
+        </Alert>
+      )}
+
+      {/* Warning alert banner */}
+      {warningVehicles.length > 0 && (
+        <Alert className="mb-4 border-warning/50 bg-warning/10">
+          <Bell className="h-5 w-5 text-warning" />
+          <AlertTitle className="font-bold text-warning">
+            {warningVehicles.length} veículo(s) se aproximando da troca de óleo
+          </AlertTitle>
+          <AlertDescription>
+            {warningVehicles.map((v) => (
+              <span key={v.id} className="inline-flex items-center mr-3 font-mono font-semibold text-warning">
+                {v.plate} ({((v.next_oil_change || 0) - v.km).toLocaleString("pt-BR")} km restantes)
+              </span>
+            ))}
+          </AlertDescription>
+        </Alert>
+      )}
 
       {isLoading ? (
         <p className="text-muted-foreground">Carregando...</p>
