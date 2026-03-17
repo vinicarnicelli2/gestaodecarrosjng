@@ -7,6 +7,7 @@ import { AuthProvider } from "@/contexts/AuthContext";
 import ProtectedRoute from "@/components/ProtectedRoute";
 import Auth from "./pages/Auth";
 import ResetPassword from "./pages/ResetPassword";
+import Welcome from "./pages/Welcome";
 import Index from "./pages/Index";
 import Checklist from "./pages/Checklist";
 import ChecklistHistory from "./pages/ChecklistHistory";
