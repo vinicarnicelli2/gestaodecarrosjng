@@ -22,36 +22,30 @@ serve(async (req: Request) => {
     const resend = new Resend(resendApiKey);
 
     // Fetch all vehicles
-    const { data: vehicles, error: vError } = await supabase
-      .from("vehicles")
-      .select("*");
+    const { data: vehicles, error: vError } = await supabase.from("vehicles").select("*");
 
     if (vError) throw vError;
 
     // Filter critical vehicles (< 1000 km remaining)
-    const critical = (vehicles || []).filter(
-      (v: any) => (v.next_oil_change || 0) - v.km < 1000
-    );
+    const critical = (vehicles || []).filter((v: any) => (v.next_oil_change || 0) - v.km < 1000);
 
     if (critical.length === 0) {
-      return new Response(
-        JSON.stringify({ message: "Nenhum veículo crítico encontrado" }),
-        { status: 200, headers: { "Content-Type": "application/json", ...corsHeaders } }
-      );
+      return new Response(JSON.stringify({ message: "Nenhum veículo crítico encontrado" }), {
+        status: 200,
+        headers: { "Content-Type": "application/json", ...corsHeaders },
+      });
     }
 
     // Fetch managers to notify
-    const { data: managers, error: mError } = await supabase
-      .from("managers")
-      .select("name, email");
+    const { data: managers, error: mError } = await supabase.from("managers").select("name, email");
 
     if (mError) throw mError;
 
     if (!managers || managers.length === 0) {
-      return new Response(
-        JSON.stringify({ message: "Nenhum gestor cadastrado para notificar" }),
-        { status: 200, headers: { "Content-Type": "application/json", ...corsHeaders } }
-      );
+      return new Response(JSON.stringify({ message: "Nenhum gestor cadastrado para notificar" }), {
+        status: 200,
+        headers: { "Content-Type": "application/json", ...corsHeaders },
+      });
     }
 
     // Build vehicle rows for email
@@ -104,7 +98,7 @@ serve(async (req: Request) => {
     const results = [];
     for (const manager of managers) {
       const { error } = await resend.emails.send({
-        from: "Frota JNG <onboarding@resend.dev>",
+        from: "Frota JNG <alertas@jng.com.br>",
         to: [manager.email],
         subject: `⚠️ Alerta: ${critical.length} veículo(s) precisam de troca de óleo`,
         html,
@@ -112,15 +106,15 @@ serve(async (req: Request) => {
       results.push({ email: manager.email, error: error?.message || null });
     }
 
-    return new Response(
-      JSON.stringify({ sent: results.length, critical: critical.length, results }),
-      { status: 200, headers: { "Content-Type": "application/json", ...corsHeaders } }
-    );
+    return new Response(JSON.stringify({ sent: results.length, critical: critical.length, results }), {
+      status: 200,
+      headers: { "Content-Type": "application/json", ...corsHeaders },
+    });
   } catch (error: any) {
     console.error("Oil change alert error:", error);
-    return new Response(
-      JSON.stringify({ error: error.message }),
-      { status: 500, headers: { "Content-Type": "application/json", ...corsHeaders } }
-    );
+    return new Response(JSON.stringify({ error: error.message }), {
+      status: 500,
+      headers: { "Content-Type": "application/json", ...corsHeaders },
+    });
   }
 });
