@@ -75,7 +75,7 @@ serve(async (req: Request) => {
     `;
 
     const { error } = await resend.emails.send({
-      from: "Frota JNG <onboarding@resend.dev>",
+      from: "Frota JNG <alertas@jng.com.br>",
       to: [managerEmail],
       subject: `Nova Reserva — ${requesterName} solicita ${vehiclePlate}`,
       html,
@@ -92,9 +92,9 @@ serve(async (req: Request) => {
     });
   } catch (error: any) {
     console.error("Error sending reservation notification:", error);
-    return new Response(
-      JSON.stringify({ error: error.message }),
-      { status: 500, headers: { "Content-Type": "application/json", ...corsHeaders } }
-    );
+    return new Response(JSON.stringify({ error: error.message }), {
+      status: 500,
+      headers: { "Content-Type": "application/json", ...corsHeaders },
+    });
   }
 });
