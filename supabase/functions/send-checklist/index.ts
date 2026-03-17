@@ -46,12 +46,21 @@ serve(async (req: Request) => {
     const typeLabel = checklistType || "Checklist";
     const typeBadgeColor = checklistType === "Devolução" ? "#2563eb" : "#f59e0b";
 
-    const problemRows = problems.length > 0
-      ? problems.map((p) => `<tr><td style="padding:8px;border:1px solid #e5e7eb;color:#dc2626;">⚠ ${p.label}</td><td style="padding:8px;border:1px solid #e5e7eb;color:#dc2626;font-weight:bold;">PROBLEMA</td></tr>`).join("")
-      : "";
+    const problemRows =
+      problems.length > 0
+        ? problems
+            .map(
+              (p) =>
+                `<tr><td style="padding:8px;border:1px solid #e5e7eb;color:#dc2626;">⚠ ${p.label}</td><td style="padding:8px;border:1px solid #e5e7eb;color:#dc2626;font-weight:bold;">PROBLEMA</td></tr>`,
+            )
+            .join("")
+        : "";
 
     const okRows = okItems
-      .map((item) => `<tr><td style="padding:8px;border:1px solid #e5e7eb;">${item.label}</td><td style="padding:8px;border:1px solid #e5e7eb;color:#16a34a;font-weight:bold;">OK</td></tr>`)
+      .map(
+        (item) =>
+          `<tr><td style="padding:8px;border:1px solid #e5e7eb;">${item.label}</td><td style="padding:8px;border:1px solid #e5e7eb;color:#16a34a;font-weight:bold;">OK</td></tr>`,
+      )
       .join("");
 
     const html = `
@@ -78,18 +87,22 @@ serve(async (req: Request) => {
             </tr>
           </table>
 
-          ${problems.length > 0 ? `
+          ${
+            problems.length > 0
+              ? `
           <div style="background:#fef2f2;border:1px solid #fecaca;border-radius:8px;padding:16px;margin-bottom:20px;">
             <h3 style="margin:0 0 8px;color:#dc2626;">⚠ ${problems.length} problema${problems.length > 1 ? "s" : ""} identificado${problems.length > 1 ? "s" : ""}</h3>
             <ul style="margin:0;padding-left:20px;">
               ${problems.map((p) => `<li style="color:#dc2626;">${p.label}</li>`).join("")}
             </ul>
           </div>
-          ` : `
+          `
+              : `
           <div style="background:#f0fdf4;border:1px solid #bbf7d0;border-radius:8px;padding:16px;margin-bottom:20px;">
             <h3 style="margin:0;color:#16a34a;">✅ Todos os itens OK</h3>
           </div>
-          `}
+          `
+          }
 
           <h3 style="margin:0 0 12px;color:#1e293b;">Itens de Inspeção</h3>
           <table style="width:100%;border-collapse:collapse;margin-bottom:20px;">
@@ -104,21 +117,29 @@ serve(async (req: Request) => {
             </tbody>
           </table>
 
-          ${observations ? `
+          ${
+            observations
+              ? `
           <div style="background:#f8fafc;border:1px solid #e2e8f0;border-radius:8px;padding:16px;margin-bottom:20px;">
             <h3 style="margin:0 0 8px;color:#1e293b;">Observações</h3>
             <p style="margin:0;color:#475569;">${observations}</p>
           </div>
-          ` : ""}
+          `
+              : ""
+          }
 
-          ${photoUrls && photoUrls.length > 0 ? `
+          ${
+            photoUrls && photoUrls.length > 0
+              ? `
           <div style="margin-bottom:20px;">
             <h3 style="margin:0 0 12px;color:#1e293b;">📷 Fotos de Avarias (${photoUrls.length})</h3>
             <div>
               ${photoUrls.map((url: string, i: number) => `<a href="${url}" target="_blank" style="display:inline-block;margin:0 8px 8px 0;"><img src="${url}" alt="Avaria ${i + 1}" style="width:150px;height:150px;object-fit:cover;border-radius:8px;border:1px solid #e5e7eb;" /></a>`).join("")}
             </div>
           </div>
-          ` : ""}
+          `
+              : ""
+          }
         </div>
 
         <div style="background:#f1f5f9;padding:16px;text-align:center;font-size:12px;color:#94a3b8;">
@@ -128,7 +149,7 @@ serve(async (req: Request) => {
     `;
 
     const { error } = await resend.emails.send({
-      from: "Frota <onboarding@resend.dev>",
+      from: "Frota <alertas@jng.com.br>",
       to: ["compras@jng.com.br"],
       subject: `${typeLabel} — ${vehiclePlate} ${problems.length > 0 ? `(${problems.length} problema${problems.length > 1 ? "s" : ""})` : "(Tudo OK)"}`,
       html,
@@ -145,12 +166,9 @@ serve(async (req: Request) => {
     });
   } catch (error: any) {
     console.error("Error sending checklist email:", error);
-    return new Response(
-      JSON.stringify({ error: error.message }),
-      {
-        status: 500,
-        headers: { "Content-Type": "application/json", ...corsHeaders },
-      }
-    );
+    return new Response(JSON.stringify({ error: error.message }), {
+      status: 500,
+      headers: { "Content-Type": "application/json", ...corsHeaders },
+    });
   }
 });
