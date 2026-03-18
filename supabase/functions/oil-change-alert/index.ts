@@ -98,7 +98,7 @@ serve(async (req: Request) => {
     const results = [];
     for (const manager of managers) {
       const { error } = await resend.emails.send({
-        from: "Frota JNG <ti@jng.com.br>",
+        from: "Frota JNG <noreply@jng.com.br>",
         to: [manager.email],
         subject: `⚠️ Alerta: ${critical.length} veículo(s) precisam de troca de óleo`,
         html,
