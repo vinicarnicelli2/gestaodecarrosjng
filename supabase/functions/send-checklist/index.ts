@@ -19,6 +19,7 @@ interface ChecklistPayload {
   observations: string;
   photoUrls: string[];
   checklistType?: string;
+  signatureUrl?: string;
 }
 
 serve(async (req: Request) => {
@@ -37,6 +38,7 @@ serve(async (req: Request) => {
       observations,
       photoUrls,
       checklistType,
+      signatureUrl,
     }: ChecklistPayload = await req.json();
 
     const problems = checklistItems.filter((item) => checks[item.id] === "problema");
@@ -135,6 +137,30 @@ serve(async (req: Request) => {
             <h3 style="margin:0 0 12px;color:#1e293b;">📷 Fotos de Avarias (${photoUrls.length})</h3>
             <div>
               ${photoUrls.map((url: string, i: number) => `<a href="${url}" target="_blank" style="display:inline-block;margin:0 8px 8px 0;"><img src="${url}" alt="Avaria ${i + 1}" style="width:150px;height:150px;object-fit:cover;border-radius:8px;border:1px solid #e5e7eb;" /></a>`).join("")}
+            </div>
+          </div>
+          `
+              : ""
+          }
+
+          <div style="background:#fef9f0;border:1px solid #f59e0b;border-radius:8px;padding:16px;margin-bottom:20px;">
+            <h3 style="margin:0 0 8px;color:#b45309;">📋 Termo de Responsabilidade</h3>
+            <ul style="margin:0;padding-left:20px;font-size:13px;color:#78350f;line-height:1.7;">
+              <li>Quaisquer <strong>danos causados</strong> ao veículo durante o período de utilização serão de inteira responsabilidade do motorista.</li>
+              <li>Os custos de reparo dos danos identificados na devolução, que não constavam na retirada, <strong>serão descontados</strong> conforme política da empresa.</li>
+              <li>Compromete-se a utilizar o veículo de forma adequada, respeitando as leis de trânsito e normas internas.</li>
+              <li>Multas de trânsito ocorridas durante o período de uso são de responsabilidade do motorista.</li>
+            </ul>
+            <p style="margin:12px 0 0;font-size:13px;color:#16a34a;font-weight:bold;">✅ Termos aceitos pelo motorista</p>
+          </div>
+
+          ${
+            signatureUrl
+              ? `
+          <div style="margin-bottom:20px;">
+            <h3 style="margin:0 0 12px;color:#1e293b;">✍️ Assinatura do Motorista</h3>
+            <div style="background:#fff;border:1px solid #e5e7eb;border-radius:8px;padding:12px;display:inline-block;">
+              <img src="${signatureUrl}" alt="Assinatura do motorista" style="max-width:300px;height:auto;" />
             </div>
           </div>
           `
