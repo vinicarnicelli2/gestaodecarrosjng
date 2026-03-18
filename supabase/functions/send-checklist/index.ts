@@ -19,6 +19,7 @@ interface ChecklistPayload {
   observations: string;
   photoUrls: string[];
   checklistType?: string;
+  signatureUrl?: string;
 }
 
 serve(async (req: Request) => {
