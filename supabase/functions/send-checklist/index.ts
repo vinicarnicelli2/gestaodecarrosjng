@@ -142,6 +142,30 @@ serve(async (req: Request) => {
           `
               : ""
           }
+
+          <div style="background:#fef9f0;border:1px solid #f59e0b;border-radius:8px;padding:16px;margin-bottom:20px;">
+            <h3 style="margin:0 0 8px;color:#b45309;">📋 Termo de Responsabilidade</h3>
+            <ul style="margin:0;padding-left:20px;font-size:13px;color:#78350f;line-height:1.7;">
+              <li>Quaisquer <strong>danos causados</strong> ao veículo durante o período de utilização serão de inteira responsabilidade do motorista.</li>
+              <li>Os custos de reparo dos danos identificados na devolução, que não constavam na retirada, <strong>serão descontados</strong> conforme política da empresa.</li>
+              <li>Compromete-se a utilizar o veículo de forma adequada, respeitando as leis de trânsito e normas internas.</li>
+              <li>Multas de trânsito ocorridas durante o período de uso são de responsabilidade do motorista.</li>
+            </ul>
+            <p style="margin:12px 0 0;font-size:13px;color:#16a34a;font-weight:bold;">✅ Termos aceitos pelo motorista</p>
+          </div>
+
+          ${
+            signatureUrl
+              ? `
+          <div style="margin-bottom:20px;">
+            <h3 style="margin:0 0 12px;color:#1e293b;">✍️ Assinatura do Motorista</h3>
+            <div style="background:#fff;border:1px solid #e5e7eb;border-radius:8px;padding:12px;display:inline-block;">
+              <img src="${signatureUrl}" alt="Assinatura do motorista" style="max-width:300px;height:auto;" />
+            </div>
+          </div>
+          `
+              : ""
+          }
         </div>
 
         <div style="background:#f1f5f9;padding:16px;text-align:center;font-size:12px;color:#94a3b8;">
