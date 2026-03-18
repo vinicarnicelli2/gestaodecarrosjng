@@ -75,7 +75,7 @@ serve(async (req: Request) => {
     `;
 
     const { error } = await resend.emails.send({
-      from: "Frota JNG <ti@jng.com.br>",
+      from: "Frota JNG <noreply@jng.com.br>",
       to: [managerEmail],
       subject: `Nova Reserva — ${requesterName} solicita ${vehiclePlate}`,
       html,
