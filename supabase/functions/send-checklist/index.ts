@@ -175,7 +175,7 @@ serve(async (req: Request) => {
     `;
 
     const { error } = await resend.emails.send({
-      from: "Frota <noreply@jng.com.br>",
+      from: "Frota <frotas@jng.com.br>",
       to: ["compras@jng.com.br"],
       subject: `${typeLabel} — ${vehiclePlate} ${problems.length > 0 ? `(${problems.length} problema${problems.length > 1 ? "s" : ""})` : "(Tudo OK)"}`,
       html,
