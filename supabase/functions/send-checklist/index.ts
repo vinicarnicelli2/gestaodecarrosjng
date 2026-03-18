@@ -38,6 +38,7 @@ serve(async (req: Request) => {
       observations,
       photoUrls,
       checklistType,
+      signatureUrl,
     }: ChecklistPayload = await req.json();
 
     const problems = checklistItems.filter((item) => checks[item.id] === "problema");
