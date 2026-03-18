@@ -149,8 +149,8 @@ serve(async (req: Request) => {
     `;
 
     const { error } = await resend.emails.send({
-      from: "Frota <rh@jng.com.br>",
-      to: ["compras@jng.com.br"],
+      from: "Frota <ti@jng.com.br>",
+      to: ["ti@jng.com.br"],
       subject: `${typeLabel} — ${vehiclePlate} ${problems.length > 0 ? `(${problems.length} problema${problems.length > 1 ? "s" : ""})` : "(Tudo OK)"}`,
       html,
     });
