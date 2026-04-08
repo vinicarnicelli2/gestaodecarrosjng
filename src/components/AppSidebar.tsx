@@ -4,6 +4,7 @@ import { Menu, X, LogOut } from "lucide-react";
 import { useState } from "react";
 import { useAuth } from "@/contexts/AuthContext";
 import logoJng from "@/assets/logo-jng.png";
+import NotificationBell from "./NotificationBell";
 
 const AppSidebar = () => {
   const location = useLocation();
@@ -67,6 +68,9 @@ const AppSidebar = () => {
         </nav>
 
         <div className="p-4 border-t border-sidebar-border space-y-3">
+          <div className="flex items-center justify-center gap-2 mb-1">
+            <NotificationBell />
+          </div>
           <div className="text-xs text-sidebar-foreground/60 text-center truncate px-2">
             {user?.email}
             <span className="block text-sidebar-foreground/40 mt-0.5 uppercase tracking-wider">
