@@ -211,7 +211,9 @@ const Checklist = () => {
 
       // Save to database
       const problemCount = Object.values(checks).filter((v) => v === "problema").length;
+      const checklistId = crypto.randomUUID();
       const { error: dbError } = await supabase.from("checklists").insert({
+        id: checklistId,
         vehicle_plate: selectedVehicle?.plate ?? "",
         vehicle_model: selectedVehicle?.model ?? "",
         driver_name: driverName,
@@ -227,6 +229,31 @@ const Checklist = () => {
       } as any);
 
       if (dbError) console.error("Erro ao salvar no banco:", dbError);
+
+      // Create notifications for admins when there are problems
+      if (problemCount > 0) {
+        const { data: adminRoles } = await supabase
+          .from("user_roles")
+          .select("user_id")
+          .eq("role", "admin");
+
+        if (adminRoles && adminRoles.length > 0) {
+          const problemItems = checklistItems
+            .filter((item) => checks[item.id] === "problema")
+            .map((item) => item.label);
+
+          const notifs = adminRoles.map((r) => ({
+            user_id: r.user_id,
+            title: `⚠️ ${problemCount} problema${problemCount > 1 ? "s" : ""} — ${selectedVehicle?.plate}`,
+            message: `${driverName} reportou: ${problemItems.join(", ")}`,
+            type: "problem",
+            checklist_id: checklistId,
+          }));
+
+          const { error: notifError } = await supabase.from("notifications").insert(notifs);
+          if (notifError) console.error("Erro ao criar notificações:", notifError);
+        }
+      }
 
       toast.success(`Checklist de ${typeLabel} enviado com sucesso!`);
 
