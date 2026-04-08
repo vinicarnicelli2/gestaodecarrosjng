@@ -1,7 +1,7 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import AppLayout from "@/components/AppLayout";
 import { supabase } from "@/integrations/supabase/client";
-import { History, Eye, ChevronDown, ChevronUp } from "lucide-react";
+import { History, ChevronDown, ChevronUp, Loader2 } from "lucide-react";
 
 interface ChecklistRecord {
   id: string;
@@ -34,10 +34,23 @@ const checklistLabels: Record<string, string> = {
   painel: "Painel sem alertas",
 };
 
+/** Resolve a storage path (or legacy full URL) to a signed URL */
+async function resolveUrl(pathOrUrl: string): Promise<string> {
+  if (!pathOrUrl) return "";
+  if (pathOrUrl.startsWith("http")) return pathOrUrl; // legacy full URL
+  const { data, error } = await supabase.storage
+    .from("checklist-photos")
+    .createSignedUrl(pathOrUrl, 60 * 60); // 1 hour
+  if (error || !data?.signedUrl) return "";
+  return data.signedUrl;
+}
+
 const ChecklistHistory = () => {
   const [records, setRecords] = useState<ChecklistRecord[]>([]);
   const [loading, setLoading] = useState(true);
   const [expandedId, setExpandedId] = useState<string | null>(null);
+  const [signedUrls, setSignedUrls] = useState<Record<string, string[]>>({});
+  const [loadingUrls, setLoadingUrls] = useState<string | null>(null);
 
   useEffect(() => {
     const fetchRecords = async () => {
@@ -51,6 +64,24 @@ const ChecklistHistory = () => {
     };
     fetchRecords();
   }, []);
+
+  const loadSignedUrls = useCallback(async (record: ChecklistRecord) => {
+    if (signedUrls[record.id]) return;
+    setLoadingUrls(record.id);
+    const urls = await Promise.all(
+      (record.photo_urls || []).map((p) => resolveUrl(p)),
+    );
+    setSignedUrls((prev) => ({ ...prev, [record.id]: urls.filter(Boolean) }));
+    setLoadingUrls(null);
+  }, [signedUrls]);
+
+  const handleToggle = (record: ChecklistRecord) => {
+    const willExpand = expandedId !== record.id;
+    setExpandedId(willExpand ? record.id : null);
+    if (willExpand && record.photo_urls?.length) {
+      loadSignedUrls(record);
+    }
+  };
 
   const formatDate = (iso: string) =>
     new Date(iso).toLocaleString("pt-BR", { timeZone: "America/Sao_Paulo" });
@@ -82,6 +113,7 @@ const ChecklistHistory = () => {
           {records.map((record) => {
             const isExpanded = expandedId === record.id;
             const checks = record.checks as Record<string, string>;
+            const resolvedUrls = signedUrls[record.id] || [];
 
             return (
               <div
@@ -89,7 +121,7 @@ const ChecklistHistory = () => {
                 className="bg-card rounded-lg border overflow-hidden animate-fade-in"
               >
                 <button
-                  onClick={() => setExpandedId(isExpanded ? null : record.id)}
+                  onClick={() => handleToggle(record)}
                   className="w-full flex items-center justify-between p-5 text-left hover:bg-muted/30 transition-colors"
                 >
                   <div className="flex items-center gap-4 flex-wrap">
@@ -157,23 +189,30 @@ const ChecklistHistory = () => {
                         <h3 className="text-sm font-semibold mb-2">
                           Fotos ({record.photo_urls.length})
                         </h3>
-                        <div className="flex flex-wrap gap-2">
-                          {record.photo_urls.map((url, i) => (
-                            <a
-                              key={i}
-                              href={url}
-                              target="_blank"
-                              rel="noopener noreferrer"
-                              className="block w-20 h-20 rounded-lg overflow-hidden border hover:opacity-80 transition-opacity"
-                            >
-                              <img
-                                src={url}
-                                alt={`Foto ${i + 1}`}
-                                className="w-full h-full object-cover"
-                              />
-                            </a>
-                          ))}
-                        </div>
+                        {loadingUrls === record.id ? (
+                          <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                            <Loader2 size={16} className="animate-spin" />
+                            Carregando fotos...
+                          </div>
+                        ) : (
+                          <div className="flex flex-wrap gap-2">
+                            {resolvedUrls.map((url, i) => (
+                              <a
+                                key={i}
+                                href={url}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="block w-20 h-20 rounded-lg overflow-hidden border hover:opacity-80 transition-opacity"
+                              >
+                                <img
+                                  src={url}
+                                  alt={`Foto ${i + 1}`}
+                                  className="w-full h-full object-cover"
+                                />
+                              </a>
+                            ))}
+                          </div>
+                        )}
                       </div>
                     )}
                   </div>
