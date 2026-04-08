@@ -141,7 +141,7 @@ const Checklist = () => {
   }, []);
 
   const uploadPhotos = async (): Promise<string[]> => {
-    const urls: string[] = [];
+    const paths: string[] = [];
     const timestamp = Date.now();
     for (let i = 0; i < photos.length; i++) {
       const photo = photos[i];
@@ -151,10 +151,9 @@ const Checklist = () => {
         .from("checklist-photos")
         .upload(path, photo.file, { contentType: photo.file.type });
       if (error) throw new Error(`Erro ao enviar foto ${i + 1}: ${error.message}`);
-      const { data: urlData } = supabase.storage.from("checklist-photos").getPublicUrl(path);
-      urls.push(urlData.publicUrl);
+      paths.push(path);
     }
-    return urls;
+    return paths;
   };
 
   const selectedReservation = reservations.find(r => r.id === reservationId);
@@ -180,8 +179,7 @@ const Checklist = () => {
           .from("checklist-photos")
           .upload(sigPath, blob, { contentType: "image/png" });
         if (sigError) throw new Error("Erro ao enviar assinatura: " + sigError.message);
-        const { data: sigUrlData } = supabase.storage.from("checklist-photos").getPublicUrl(sigPath);
-        signatureUrl = sigUrlData.publicUrl;
+        signatureUrl = sigPath;
       }
 
       let photoUrls: string[] = [];
