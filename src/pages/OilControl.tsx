@@ -1,20 +1,26 @@
 import { useState } from "react";
 import AppLayout from "@/components/AppLayout";
-import { Droplets, AlertTriangle, CheckCircle, Pencil, Bell } from "lucide-react";
+import { Droplets, AlertTriangle, CheckCircle, Pencil, Bell, Plus, Trash2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from "@/components/ui/dialog";
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
+import { useAuth } from "@/contexts/AuthContext";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 
 const OilControl = () => {
   const { toast } = useToast();
+  const { user, isAdmin } = useAuth();
   const queryClient = useQueryClient();
   const [editVehicle, setEditVehicle] = useState<any>(null);
   const [formData, setFormData] = useState({ km: 0, next_oil_change: 0, last_oil_change: "" });
+  const [showAddDialog, setShowAddDialog] = useState(false);
+  const [addForm, setAddForm] = useState({ plate: "", model: "", year: "", km: "0", next_oil_change: "0", last_oil_change: "" });
+  const [deleteVehicle, setDeleteVehicle] = useState<any>(null);
 
   const { data: vehicles = [], isLoading } = useQuery({
     queryKey: ["vehicles-oil"],
@@ -43,6 +49,45 @@ const OilControl = () => {
     },
   });
 
+  const addMutation = useMutation({
+    mutationFn: async (values: typeof addForm) => {
+      const { error } = await supabase.from("vehicles").insert({
+        plate: values.plate.toUpperCase(),
+        model: values.model,
+        year: Number(values.year),
+        km: Number(values.km),
+        next_oil_change: Number(values.next_oil_change),
+        last_oil_change: values.last_oil_change || null,
+        user_id: user!.id,
+      });
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["vehicles-oil"] });
+      toast({ title: "Veículo adicionado com sucesso" });
+      setShowAddDialog(false);
+      setAddForm({ plate: "", model: "", year: "", km: "0", next_oil_change: "0", last_oil_change: "" });
+    },
+    onError: () => {
+      toast({ title: "Erro ao adicionar veículo", variant: "destructive" });
+    },
+  });
+
+  const deleteMutation = useMutation({
+    mutationFn: async (id: string) => {
+      const { error } = await supabase.from("vehicles").delete().eq("id", id);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["vehicles-oil"] });
+      toast({ title: "Veículo excluído com sucesso" });
+      setDeleteVehicle(null);
+    },
+    onError: () => {
+      toast({ title: "Erro ao excluir veículo", variant: "destructive" });
+    },
+  });
+
   const openEdit = (v: any) => {
     setEditVehicle(v);
     setFormData({
@@ -55,6 +100,15 @@ const OilControl = () => {
   const handleSave = () => {
     if (!editVehicle) return;
     updateMutation.mutate({ id: editVehicle.id, ...formData });
+  };
+
+  const handleAdd = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!addForm.plate || !addForm.model || !addForm.year) {
+      toast({ title: "Preencha placa, modelo e ano", variant: "destructive" });
+      return;
+    }
+    addMutation.mutate(addForm);
   };
 
   const sorted = [...vehicles].sort((a, b) => ((a.next_oil_change || 0) - a.km) - ((b.next_oil_change || 0) - b.km));
@@ -71,12 +125,18 @@ const OilControl = () => {
 
   return (
     <AppLayout>
-      <div className="mb-8">
-        <h1 className="text-3xl font-display font-bold">Controle de Óleo</h1>
-        <p className="text-muted-foreground mt-1">Monitoramento de troca de óleo dos veículos</p>
+      <div className="mb-8 flex items-center justify-between">
+        <div>
+          <h1 className="text-3xl font-display font-bold">Controle de Óleo</h1>
+          <p className="text-muted-foreground mt-1">Monitoramento de troca de óleo dos veículos</p>
+        </div>
+        {isAdmin && (
+          <Button onClick={() => setShowAddDialog(true)} className="gap-2">
+            <Plus size={18} /> Adicionar Veículo
+          </Button>
+        )}
       </div>
 
-      {/* Critical alert banner */}
       {criticalVehicles.length > 0 && (
         <Alert variant="destructive" className="mb-4 border-destructive/50 bg-destructive/10">
           <AlertTriangle className="h-5 w-5" />
@@ -93,7 +153,6 @@ const OilControl = () => {
         </Alert>
       )}
 
-      {/* Warning alert banner */}
       {warningVehicles.length > 0 && (
         <Alert className="mb-4 border-warning/50 bg-warning/10">
           <Bell className="h-5 w-5 text-warning" />
@@ -139,6 +198,14 @@ const OilControl = () => {
                     >
                       <Pencil size={16} />
                     </button>
+                    {isAdmin && (
+                      <button
+                        onClick={() => setDeleteVehicle(v)}
+                        className="p-2 rounded-lg bg-destructive/10 hover:bg-destructive/20 text-destructive transition-colors"
+                      >
+                        <Trash2 size={16} />
+                      </button>
+                    )}
                     <div className={`p-2 rounded-lg ${isUrgent ? "bg-destructive/15 text-destructive" : isWarning ? "bg-warning/15 text-warning" : "bg-success/15 text-success"}`}>
                       {isUrgent ? <AlertTriangle size={18} /> : isWarning ? <Droplets size={18} /> : <CheckCircle size={18} />}
                     </div>
@@ -178,6 +245,7 @@ const OilControl = () => {
         </div>
       )}
 
+      {/* Edit Dialog */}
       <Dialog open={!!editVehicle} onOpenChange={(open) => !open && setEditVehicle(null)}>
         <DialogContent>
           <DialogHeader>
@@ -186,27 +254,15 @@ const OilControl = () => {
           <div className="space-y-4">
             <div>
               <Label>KM Atual</Label>
-              <Input
-                type="number"
-                value={formData.km}
-                onChange={(e) => setFormData((p) => ({ ...p, km: Number(e.target.value) }))}
-              />
+              <Input type="number" value={formData.km} onChange={(e) => setFormData((p) => ({ ...p, km: Number(e.target.value) }))} />
             </div>
             <div>
               <Label>Próxima Troca (KM)</Label>
-              <Input
-                type="number"
-                value={formData.next_oil_change}
-                onChange={(e) => setFormData((p) => ({ ...p, next_oil_change: Number(e.target.value) }))}
-              />
+              <Input type="number" value={formData.next_oil_change} onChange={(e) => setFormData((p) => ({ ...p, next_oil_change: Number(e.target.value) }))} />
             </div>
             <div>
               <Label>Última Troca</Label>
-              <Input
-                type="date"
-                value={formData.last_oil_change}
-                onChange={(e) => setFormData((p) => ({ ...p, last_oil_change: e.target.value }))}
-              />
+              <Input type="date" value={formData.last_oil_change} onChange={(e) => setFormData((p) => ({ ...p, last_oil_change: e.target.value }))} />
             </div>
           </div>
           <DialogFooter>
@@ -217,6 +273,73 @@ const OilControl = () => {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      {/* Add Vehicle Dialog */}
+      <Dialog open={showAddDialog} onOpenChange={setShowAddDialog}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Adicionar Veículo</DialogTitle>
+            <DialogDescription>Preencha os dados do novo veículo</DialogDescription>
+          </DialogHeader>
+          <form onSubmit={handleAdd} className="space-y-4">
+            <div>
+              <Label>Placa</Label>
+              <Input placeholder="ABC-1234" value={addForm.plate} onChange={(e) => setAddForm((p) => ({ ...p, plate: e.target.value }))} required />
+            </div>
+            <div>
+              <Label>Modelo</Label>
+              <Input placeholder="Ex: Fiat Strada" value={addForm.model} onChange={(e) => setAddForm((p) => ({ ...p, model: e.target.value }))} required />
+            </div>
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <Label>Ano</Label>
+                <Input type="number" placeholder="2024" value={addForm.year} onChange={(e) => setAddForm((p) => ({ ...p, year: e.target.value }))} required />
+              </div>
+              <div>
+                <Label>KM Atual</Label>
+                <Input type="number" value={addForm.km} onChange={(e) => setAddForm((p) => ({ ...p, km: e.target.value }))} />
+              </div>
+            </div>
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <Label>Próx. Troca (KM)</Label>
+                <Input type="number" value={addForm.next_oil_change} onChange={(e) => setAddForm((p) => ({ ...p, next_oil_change: e.target.value }))} />
+              </div>
+              <div>
+                <Label>Última Troca</Label>
+                <Input type="date" value={addForm.last_oil_change} onChange={(e) => setAddForm((p) => ({ ...p, last_oil_change: e.target.value }))} />
+              </div>
+            </div>
+            <DialogFooter>
+              <Button type="button" variant="outline" onClick={() => setShowAddDialog(false)}>Cancelar</Button>
+              <Button type="submit" disabled={addMutation.isPending}>
+                {addMutation.isPending ? "Adicionando..." : "Adicionar"}
+              </Button>
+            </DialogFooter>
+          </form>
+        </DialogContent>
+      </Dialog>
+
+      {/* Delete Confirmation */}
+      <AlertDialog open={!!deleteVehicle} onOpenChange={(open) => !open && setDeleteVehicle(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Excluir veículo {deleteVehicle?.plate}?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Esta ação não pode ser desfeita. O veículo será removido permanentemente.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={() => deleteVehicle && deleteMutation.mutate(deleteVehicle.id)}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              Excluir
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </AppLayout>
   );
 };
