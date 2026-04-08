@@ -146,7 +146,7 @@ const Checklist = () => {
     for (let i = 0; i < photos.length; i++) {
       const photo = photos[i];
       const ext = photo.file.name.split(".").pop() || "jpg";
-      const path = `${timestamp}_${i}.${ext}`;
+      const path = `${user?.id}/${timestamp}_${i}.${ext}`;
       const { error } = await supabase.storage
         .from("checklist-photos")
         .upload(path, photo.file, { contentType: photo.file.type });
@@ -175,7 +175,7 @@ const Checklist = () => {
       let signatureUrl = "";
       if (signatureDataUrl) {
         const blob = await (await fetch(signatureDataUrl)).blob();
-        const sigPath = `signatures/${Date.now()}_signature.png`;
+        const sigPath = `${user?.id}/signatures/${Date.now()}_signature.png`;
         const { error: sigError } = await supabase.storage
           .from("checklist-photos")
           .upload(sigPath, blob, { contentType: "image/png" });
