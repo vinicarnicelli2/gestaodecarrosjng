@@ -1,0 +1,1 @@
+DROP POLICY IF EXISTS "Checklist photos are publicly readable" ON storage.objects;
