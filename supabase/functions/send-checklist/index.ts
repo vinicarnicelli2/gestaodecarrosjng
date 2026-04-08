@@ -1,5 +1,6 @@
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import { Resend } from "npm:resend@4.0.0";
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2.49.1";
 
 const resend = new Resend(Deno.env.get("RESEND_API_KEY"));
 
@@ -22,6 +23,19 @@ interface ChecklistPayload {
   signatureUrl?: string;
 }
 
+async function getSignedUrl(supabaseAdmin: any, path: string): Promise<string> {
+  // If it's already a full URL (legacy), return as-is
+  if (path.startsWith("http")) return path;
+  const { data, error } = await supabaseAdmin.storage
+    .from("checklist-photos")
+    .createSignedUrl(path, 60 * 60 * 24 * 30); // 30 days
+  if (error || !data?.signedUrl) {
+    console.error("Error creating signed URL for", path, error);
+    return "";
+  }
+  return data.signedUrl;
+}
+
 serve(async (req: Request) => {
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
@@ -40,6 +54,20 @@ serve(async (req: Request) => {
       checklistType,
       signatureUrl,
     }: ChecklistPayload = await req.json();
+
+    // Create admin client for signed URLs
+    const supabaseAdmin = createClient(
+      Deno.env.get("SUPABASE_URL")!,
+      Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!,
+    );
+
+    // Generate signed URLs for photos and signature
+    const signedPhotoUrls = await Promise.all(
+      (photoUrls || []).map((p) => getSignedUrl(supabaseAdmin, p)),
+    );
+    const signedSignatureUrl = signatureUrl
+      ? await getSignedUrl(supabaseAdmin, signatureUrl)
+      : "";
 
     const problems = checklistItems.filter((item) => checks[item.id] === "problema");
     const okItems = checklistItems.filter((item) => checks[item.id] === "ok");
@@ -131,12 +159,12 @@ serve(async (req: Request) => {
           }
 
           ${
-            photoUrls && photoUrls.length > 0
+            signedPhotoUrls.filter(Boolean).length > 0
               ? `
           <div style="margin-bottom:20px;">
-            <h3 style="margin:0 0 12px;color:#1e293b;">📷 Fotos de Avarias (${photoUrls.length})</h3>
+            <h3 style="margin:0 0 12px;color:#1e293b;">📷 Fotos de Avarias (${signedPhotoUrls.filter(Boolean).length})</h3>
             <div>
-              ${photoUrls.map((url: string, i: number) => `<a href="${url}" target="_blank" style="display:inline-block;margin:0 8px 8px 0;"><img src="${url}" alt="Avaria ${i + 1}" style="width:150px;height:150px;object-fit:cover;border-radius:8px;border:1px solid #e5e7eb;" /></a>`).join("")}
+              ${signedPhotoUrls.filter(Boolean).map((url: string, i: number) => `<a href="${url}" target="_blank" style="display:inline-block;margin:0 8px 8px 0;"><img src="${url}" alt="Avaria ${i + 1}" style="width:150px;height:150px;object-fit:cover;border-radius:8px;border:1px solid #e5e7eb;" /></a>`).join("")}
             </div>
           </div>
           `
@@ -155,12 +183,12 @@ serve(async (req: Request) => {
           </div>
 
           ${
-            signatureUrl
+            signedSignatureUrl
               ? `
           <div style="margin-bottom:20px;">
             <h3 style="margin:0 0 12px;color:#1e293b;">✍️ Assinatura do Motorista</h3>
             <div style="background:#fff;border:1px solid #e5e7eb;border-radius:8px;padding:12px;display:inline-block;">
-              <img src="${signatureUrl}" alt="Assinatura do motorista" style="max-width:300px;height:auto;" />
+              <img src="${signedSignatureUrl}" alt="Assinatura do motorista" style="max-width:300px;height:auto;" />
             </div>
           </div>
           `
