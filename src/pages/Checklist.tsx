@@ -242,15 +242,17 @@ const Checklist = () => {
             .filter((item) => checks[item.id] === "problema")
             .map((item) => item.label);
 
-          const notifs = adminRoles.map((r) => ({
-            user_id: r.user_id,
-            title: `⚠️ ${problemCount} problema${problemCount > 1 ? "s" : ""} — ${selectedVehicle?.plate}`,
-            message: `${driverName} reportou: ${problemItems.join(", ")}`,
-            type: "problem",
-            checklist_id: checklistId,
-          }));
+          const adminUserIds = adminRoles.map((r) => r.user_id);
+          const title = `⚠️ ${problemCount} problema${problemCount > 1 ? "s" : ""} — ${selectedVehicle?.plate}`;
+          const message = `${driverName} reportou: ${problemItems.join(", ")}`;
 
-          const { error: notifError } = await supabase.from("notifications").insert(notifs);
+          const { error: notifError } = await supabase.rpc("create_problem_notifications", {
+            p_user_ids: adminUserIds,
+            p_title: title,
+            p_message: message,
+            p_type: "problem",
+            p_checklist_id: checklistId,
+          });
           if (notifError) console.error("Erro ao criar notificações:", notifError);
         }
       }
