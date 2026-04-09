@@ -380,6 +380,16 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      create_problem_notifications: {
+        Args: {
+          p_checklist_id?: string
+          p_message: string
+          p_title: string
+          p_type?: string
+          p_user_ids: string[]
+        }
+        Returns: undefined
+      }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]
