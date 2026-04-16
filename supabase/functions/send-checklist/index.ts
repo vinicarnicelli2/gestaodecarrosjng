@@ -23,6 +23,14 @@ interface ChecklistPayload {
   signatureUrl?: string;
 }
 
+const esc = (s: unknown): string =>
+  String(s ?? "")
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#39;");
+
 async function getSignedUrl(supabaseAdmin: any, path: string): Promise<string> {
   if (path.startsWith("http")) return path;
   const { data, error } = await supabaseAdmin.storage
@@ -85,14 +93,14 @@ function buildHtml(params: {
   const problemRows = problems
     .map(
       (p) =>
-        `<tr><td style="padding:8px;border:1px solid #e5e7eb;color:#dc2626;">⚠ ${p.label}</td><td style="padding:8px;border:1px solid #e5e7eb;color:#dc2626;font-weight:bold;">PROBLEMA</td></tr>`,
+        `<tr><td style="padding:8px;border:1px solid #e5e7eb;color:#dc2626;">⚠ ${esc(p.label)}</td><td style="padding:8px;border:1px solid #e5e7eb;color:#dc2626;font-weight:bold;">PROBLEMA</td></tr>`,
     )
     .join("");
 
   const okRows = okItems
     .map(
       (item) =>
-        `<tr><td style="padding:8px;border:1px solid #e5e7eb;">${item.label}</td><td style="padding:8px;border:1px solid #e5e7eb;color:#16a34a;font-weight:bold;">OK</td></tr>`,
+        `<tr><td style="padding:8px;border:1px solid #e5e7eb;">${esc(item.label)}</td><td style="padding:8px;border:1px solid #e5e7eb;color:#16a34a;font-weight:bold;">OK</td></tr>`,
     )
     .join("");
 
@@ -100,24 +108,24 @@ function buildHtml(params: {
     <div style="font-family:Arial,sans-serif;max-width:600px;margin:0 auto;background:#ffffff;">
       ${urgentBanner}
       <div style="background:${headerBg};color:#ffffff;padding:24px;text-align:center;">
-        <h1 style="margin:0;font-size:22px;">${isUrgent ? "⚠️ " : ""}Checklist Veicular — ${typeLabel}</h1>
-        <span style="display:inline-block;margin-top:8px;padding:4px 12px;border-radius:12px;background:${typeBadgeColor};color:#fff;font-size:13px;font-weight:bold;">${typeLabel}</span>
-        <p style="margin:8px 0 0;opacity:0.8;font-size:14px;">${now}</p>
+        <h1 style="margin:0;font-size:22px;">${isUrgent ? "⚠️ " : ""}Checklist Veicular — ${esc(typeLabel)}</h1>
+        <span style="display:inline-block;margin-top:8px;padding:4px 12px;border-radius:12px;background:${typeBadgeColor};color:#fff;font-size:13px;font-weight:bold;">${esc(typeLabel)}</span>
+        <p style="margin:8px 0 0;opacity:0.8;font-size:14px;">${esc(now)}</p>
       </div>
       
       <div style="padding:24px;">
         <table style="width:100%;border-collapse:collapse;margin-bottom:20px;">
           <tr>
             <td style="padding:8px;font-weight:bold;color:#64748b;">Veículo:</td>
-            <td style="padding:8px;">${vehiclePlate} — ${vehicleModel}</td>
+            <td style="padding:8px;">${esc(vehiclePlate)} — ${esc(vehicleModel)}</td>
           </tr>
           <tr>
             <td style="padding:8px;font-weight:bold;color:#64748b;">Motorista:</td>
-            <td style="padding:8px;">${driverName}</td>
+            <td style="padding:8px;">${esc(driverName)}</td>
           </tr>
           <tr>
             <td style="padding:8px;font-weight:bold;color:#64748b;">KM Atual:</td>
-            <td style="padding:8px;">${km}</td>
+            <td style="padding:8px;">${esc(km)}</td>
           </tr>
         </table>
 
@@ -127,7 +135,7 @@ function buildHtml(params: {
         <div style="background:#fef2f2;border:2px solid #dc2626;border-radius:8px;padding:16px;margin-bottom:20px;">
           <h3 style="margin:0 0 8px;color:#dc2626;font-size:18px;">🚨 ${problems.length} problema${problems.length > 1 ? "s" : ""} identificado${problems.length > 1 ? "s" : ""}</h3>
           <ul style="margin:0;padding-left:20px;">
-            ${problems.map((p) => `<li style="color:#dc2626;font-weight:bold;margin-bottom:4px;">${p.label}</li>`).join("")}
+            ${problems.map((p) => `<li style="color:#dc2626;font-weight:bold;margin-bottom:4px;">${esc(p.label)}</li>`).join("")}
           </ul>
         </div>
         `
@@ -156,7 +164,7 @@ function buildHtml(params: {
             ? `
         <div style="background:#f8fafc;border:1px solid #e2e8f0;border-radius:8px;padding:16px;margin-bottom:20px;">
           <h3 style="margin:0 0 8px;color:#1e293b;">Observações</h3>
-          <p style="margin:0;color:#475569;">${observations}</p>
+          <p style="margin:0;color:#475569;white-space:pre-wrap;">${esc(observations)}</p>
         </div>
         `
             : ""
