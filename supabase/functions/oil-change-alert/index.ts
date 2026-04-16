@@ -48,14 +48,22 @@ serve(async (req: Request) => {
       });
     }
 
+    const esc = (s: unknown): string =>
+      String(s ?? "")
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;")
+        .replace(/'/g, "&#39;");
+
     // Build vehicle rows for email
     const vehicleRows = critical
       .map((v: any) => {
         const remaining = (v.next_oil_change || 0) - v.km;
         return `
           <tr>
-            <td style="padding:10px;border-bottom:1px solid #e5e7eb;font-weight:bold;font-family:monospace;">${v.plate}</td>
-            <td style="padding:10px;border-bottom:1px solid #e5e7eb;">${v.model}</td>
+            <td style="padding:10px;border-bottom:1px solid #e5e7eb;font-weight:bold;font-family:monospace;">${esc(v.plate)}</td>
+            <td style="padding:10px;border-bottom:1px solid #e5e7eb;">${esc(v.model)}</td>
             <td style="padding:10px;border-bottom:1px solid #e5e7eb;">${v.km.toLocaleString("pt-BR")} km</td>
             <td style="padding:10px;border-bottom:1px solid #e5e7eb;">${(v.next_oil_change || 0).toLocaleString("pt-BR")} km</td>
             <td style="padding:10px;border-bottom:1px solid #e5e7eb;color:#dc2626;font-weight:bold;">${remaining.toLocaleString("pt-BR")} km</td>
