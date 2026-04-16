@@ -61,36 +61,17 @@ const MyReservations = () => {
       });
       if (error) throw error;
 
-      // Send email to manager
-      const { data: linkData } = await supabase
-        .from("collaborator_manager")
-        .select("manager_id")
-        .eq("collaborator_user_id", user.id)
-        .maybeSingle();
-
-      if (linkData?.manager_id) {
-        const { data: managerData } = await supabase
-          .from("managers")
-          .select("name, email")
-          .eq("id", linkData.manager_id)
-          .single();
-
-        if (managerData) {
-          const vehicle = getVehicle(vehicleId);
-          await supabase.functions.invoke("send-reservation-notification", {
-            body: {
-              managerEmail: managerData.email,
-              managerName: managerData.name,
-              requesterName: profiles[user.id] ?? user.email,
-              vehiclePlate: vehicle?.plate ?? "",
-              vehicleModel: vehicle?.model ?? "",
-              startDate,
-              endDate,
-              reason,
-            },
-          });
-        }
-      }
+      // Send email to manager (recipient is derived server-side from JWT for security)
+      const vehicle = getVehicle(vehicleId);
+      await supabase.functions.invoke("send-reservation-notification", {
+        body: {
+          vehiclePlate: vehicle?.plate ?? "",
+          vehicleModel: vehicle?.model ?? "",
+          startDate,
+          endDate,
+          reason,
+        },
+      });
 
       toast.success("Reserva solicitada com sucesso!");
       setShowForm(false);
